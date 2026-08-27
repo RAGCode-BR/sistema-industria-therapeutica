@@ -548,6 +548,20 @@
                                 </table>
                             </div>
                         </article>
+                        <article class="cartao-configuracao cartao-gerar-estoque">
+                            <h3>Gerar estoque aleatório</h3>
+                            <p>Preencha todos os produtos ativos com uma quantidade aleatória para demonstrar o sistema.</p>
+                            <div class="campos-gerar-estoque">
+                                <label for="quantidade-aleatoria-minima">Quantidade mínima
+                                    <input type="number" id="quantidade-aleatoria-minima" min="0" step="1" value="1">
+                                </label>
+                                <label for="quantidade-aleatoria-maxima">Quantidade máxima
+                                    <input type="number" id="quantidade-aleatoria-maxima" min="0" step="1" value="100">
+                                </label>
+                            </div>
+                            <button type="button" class="botao-principal" id="botao-gerar-quantidades-aleatorias">Gerar quantidades aleatórias</button>
+                            <p class="mensagem-formulario" id="mensagem-gerar-estoque" aria-live="polite"></p>
+                        </article>
                     </section>
                 </section>
 

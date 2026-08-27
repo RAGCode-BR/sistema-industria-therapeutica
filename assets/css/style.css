@@ -993,7 +993,8 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 560px) {
-    .linha-formulario-categoria { flex-direction: column; }
+    .linha-formulario-categoria,
+    .campos-gerar-estoque { flex-direction: column; }
 }
 
 .formulario-pagina-container {
@@ -1086,6 +1087,31 @@ tbody tr:last-child td {
     grid-column: 1 / -1;
     width: min(100%, 820px);
     justify-self: start;
+}
+
+.cartao-gerar-estoque {
+    grid-column: 1 / -1;
+    width: min(100%, 820px);
+    justify-self: start;
+}
+
+.campos-gerar-estoque {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.campos-gerar-estoque label {
+    display: grid;
+    gap: 7px;
+    flex: 1;
+    color: var(--marrom-claro);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.cartao-gerar-estoque .botao-principal {
+    margin-top: 0;
 }
 
 .formulario-categoria {
