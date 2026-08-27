@@ -2323,19 +2323,8 @@ function abrirModalEntrega(pedidoId) {
     if (!pedido || !itensEmAcao(pedido).some((item) => (item.situacao || pedido.situacao) === "pendente")) return;
 
     const itens = itensEmAcao(pedido).filter((item) => (item.situacao || pedido.situacao) === "pendente");
-    const itensIndisponiveis = itens.filter((item) => {
-        const produto = buscarProduto(item.produtoId);
-        return !produto || !produto.ativo || produto.quantidade <= 0;
-    });
-
-    if (itensIndisponiveis.length) {
-        notificar("O CD não possui saldo suficiente para todos os itens. Registre uma entrada ou marque o pedido como aguardando compra.", "erro");
-        return;
-    }
-
     const item = itens[0];
-    const produto = buscarProduto(item.produtoId);
-    const maximo = Math.min(item.quantidadeSolicitada, produto?.quantidade || 0);
+    const maximo = item.quantidadeSolicitada;
     elementos.formularioEntrega.reset();
     elementos.entregaPedidoId.value = pedido.id;
     elementos.entregaModo.value = "aprovar_item";
@@ -2349,7 +2338,7 @@ function abrirModalEntrega(pedidoId) {
     elementos.entregaQuantidade.min = "1";
     elementos.entregaQuantidade.max = String(maximo);
     elementos.entregaQuantidade.value = String(maximo);
-    elementos.ajudaEntregaQuantidade.textContent = `Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${item.unidade}. Disponivel no CD: ${formatarNumero(produto?.quantidade || 0)} ${item.unidade}.`;
+    elementos.ajudaEntregaQuantidade.textContent = `Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${item.unidade}. O estoque será verificado após a aprovação de todos os itens.`;
     elementos.campoEntregaData.hidden = true;
     [elementos.entregaDia, elementos.entregaMes, elementos.entregaAno].forEach((campo) => {
         campo.disabled = true;
@@ -2457,8 +2446,8 @@ function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
     const produto = item && buscarProduto(item.produtoId);
     const quantidade = Number(quantidadeSelecionada);
 
-    if (!pedido || !item || !produto || !produto.ativo || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > item.quantidadeSolicitada || quantidade > produto.quantidade) {
-        elementos.mensagemEntrega.textContent = "Informe uma quantidade disponivel entre 1 e o total solicitado.";
+    if (!pedido || !item || !produto || !produto.ativo || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > item.quantidadeSolicitada) {
+        elementos.mensagemEntrega.textContent = "Informe uma quantidade entre 1 e o total solicitado.";
         return;
     }
 
