@@ -17,18 +17,27 @@ env:
 jobs:
   aplicar-migrations:
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
+      - name: Verificar credenciais do Supabase
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "SUPABASE_CONFIGURADA=true" >> "$GITHUB_ENV"
+          else
+            echo "SUPABASE_CONFIGURADA=false" >> "$GITHUB_ENV"
+            echo "::warning::Migrations não aplicadas automaticamente: configure os secrets SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF e SUPABASE_DB_PASSWORD."
+          fi
       - uses: supabase/setup-cli@v1
+        if: env.SUPABASE_CONFIGURADA == 'true'
         with:
           version: latest
       - name: Vincular projeto Supabase
+        if: env.SUPABASE_CONFIGURADA == 'true'
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       - name: Aplicar migrations pendentes
+        if: env.SUPABASE_CONFIGURADA == 'true'
         run: supabase db push --linked
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

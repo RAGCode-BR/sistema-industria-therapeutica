@@ -25,6 +25,7 @@
                     <button class="item-menu" data-pagina="pedidos"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Pedidos das filiais</span><span class="notificacao-pedidos" id="notificacao-pedidos" hidden aria-label="Nenhum pedido pendente">0</span></button>
                     <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
                     <button class="item-menu" data-pagina="historico"><span class="icone icone-historico" aria-hidden="true"></span><span>Histórico</span></button>
+                    <button class="item-menu" data-pagina="relatorios"><span class="icone icone-historico" aria-hidden="true"></span><span>Relatórios</span></button>
                     <button class="item-menu" data-pagina="usuarios"><span class="icone icone-usuarios" aria-hidden="true"></span><span>Usuários</span></button>
                     <button class="item-menu" type="button" id="botao-configuracoes" aria-expanded="false"><span class="icone icone-config" aria-hidden="true"></span><span>Configurações</span></button>
                     <div class="submenu-configuracoes" id="submenu-configuracoes" hidden>
@@ -318,6 +319,7 @@
                                 <option value="com_item_pendente">Pendente</option>
                                 <option value="recusado">Recusado</option>
                                 <option value="aprovado">Aprovado</option>
+                                <option value="em_producao">Em produção</option>
                                 <option value="aguardando_compra">Aguardando compra</option>
                                 <option value="em_transito">A caminho</option>
                                 <option value="recebido">Recebido</option>
@@ -339,6 +341,19 @@
                                 <tbody id="tabela-pedidos"></tbody>
                             </table>
                         </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-relatorios">
+                    <div class="cabecalho-secao"><div><p class="subtitulo-secao">Gestão operacional</p><h2>Relatórios de pedidos</h2><p>Acompanhe envios, produção e os produtos com maior demanda.</p></div></div>
+                    <section class="indicadores indicadores-relatorio">
+                        <article class="cartao"><p>Unidades enviadas</p><strong id="relatorio-unidades-enviadas">0</strong><span>em transferências para filiais</span></article>
+                        <article class="cartao"><p>Tempo médio de produção</p><strong id="relatorio-tempo-producao">—</strong><span>do início ao envio</span></article>
+                        <article class="cartao"><p>Tempo médio até o envio</p><strong id="relatorio-tempo-envio">—</strong><span>da solicitação ao envio</span></article>
+                    </section>
+                    <section class="painel-duplo relatorio-listas">
+                        <article class="quadro"><div class="titulo-quadro"><h2>Produtos mais solicitados</h2></div><div id="relatorio-produtos-solicitados" class="lista-resumo"></div></article>
+                        <article class="quadro"><div class="titulo-quadro"><h2>Envios por filial</h2></div><div id="relatorio-envios-filiais" class="lista-resumo"></div></article>
                     </section>
                 </section>
 
@@ -547,6 +562,20 @@
                                     <tbody id="tabela-unidades"></tbody>
                                 </table>
                             </div>
+                        </article>
+                        <article class="cartao-configuracao cartao-gerar-estoque">
+                            <h3>Gerar estoque aleatório</h3>
+                            <p>Preencha todos os produtos ativos com uma quantidade aleatória para demonstrar o sistema.</p>
+                            <div class="campos-gerar-estoque">
+                                <label for="quantidade-aleatoria-minima">Quantidade mínima
+                                    <input type="number" id="quantidade-aleatoria-minima" min="0" step="1" value="1">
+                                </label>
+                                <label for="quantidade-aleatoria-maxima">Quantidade máxima
+                                    <input type="number" id="quantidade-aleatoria-maxima" min="0" step="1" value="100">
+                                </label>
+                            </div>
+                            <button type="button" class="botao-principal" id="botao-gerar-quantidades-aleatorias">Gerar quantidades aleatórias</button>
+                            <p class="mensagem-formulario" id="mensagem-gerar-estoque" aria-live="polite"></p>
                         </article>
                     </section>
                 </section>
