@@ -1988,9 +1988,7 @@ function renderizarPortalFilial() {
 
     const produtos = produtosAtivos().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     const selecionado = elementos.itemPedidoProduto.value;
-    elementos.itemPedidoProduto.innerHTML = produtos.length
-        ? `<option value="">Selecione um produto</option>${produtos.map((produto) => `<option value="${produto.id}">${escaparHTML(produto.nome)} · Unidade: ${escaparHTML(produto.unidade)}</option>`).join("")}`
-        : "<option value=\"\">Nenhum produto disponível</option>";
+    elementos.itemPedidoProduto.innerHTML = produtos.map((produto) => `<option value="${produto.id}">${escaparHTML(produto.nome)}</option>`).join("");
 
     if (produtos.some((produto) => produto.id === selecionado)) {
         elementos.itemPedidoProduto.value = selecionado;
@@ -1998,7 +1996,7 @@ function renderizarPortalFilial() {
 
     elementos.itemPedidoProduto.disabled = produtos.length === 0;
     elementos.buscaItemPedido.disabled = produtos.length === 0;
-    elementos.opcoesBuscaItemPedido.innerHTML = produtos.map((produto) => `<option value="${escaparHTML(produto.codigo || produto.nome)}" label="${escaparHTML(produto.nome)}"></option>`).join("");
+    elementos.opcoesBuscaItemPedido.innerHTML = produtos.map((produto) => `<option value="${escaparHTML(`${produto.codigo ? `${produto.codigo} · ` : ""}${produto.nome}`)}"></option>`).join("");
     atualizarEstoqueAtualDoItemPedido();
     renderizarCarrinhoPedido();
 
@@ -2068,7 +2066,10 @@ function atualizarEstoqueAtualDoItemPedido() {
 function selecionarProdutoPedidoPorBusca() {
     const busca = elementos.buscaItemPedido.value.trim().toLocaleLowerCase("pt-BR");
     if (!busca) return;
-    const produto = produtosAtivos().find((item) => item.codigo.toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca);
+    const produto = produtosAtivos().find((item) => {
+        const opcao = `${item.codigo ? `${item.codigo} · ` : ""}${item.nome}`.toLocaleLowerCase("pt-BR");
+        return opcao === busca || item.codigo.toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca;
+    });
     if (produto) elementos.itemPedidoProduto.value = produto.id;
 }
 
@@ -3650,7 +3651,7 @@ elementos.seletorPortal.addEventListener("change", () => {
 });
 
 elementos.itemPedidoProduto.addEventListener("change", atualizarEstoqueAtualDoItemPedido);
-elementos.buscaItemPedido.addEventListener("change", selecionarProdutoPedidoPorBusca);
+elementos.buscaItemPedido.addEventListener("input", selecionarProdutoPedidoPorBusca);
 elementos.buscaItemPedido.addEventListener("keydown", (evento) => {
     if (evento.key === "Enter") selecionarProdutoPedidoPorBusca();
 });

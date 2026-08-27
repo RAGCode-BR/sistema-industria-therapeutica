@@ -390,11 +390,10 @@
                     <section class="pedido-lista-layout">
                         <form id="formulario-item-pedido" class="formulario-pagina-container formulario-item-pedido">
                             <h3>Adicionar item</h3>
-                            <label for="busca-item-pedido">Buscar por nome ou código</label>
-                            <input type="search" id="busca-item-pedido" list="opcoes-busca-item-pedido" placeholder="Digite o nome ou código do produto">
+                            <label for="busca-item-pedido">Produto</label>
+                            <input type="search" id="busca-item-pedido" list="opcoes-busca-item-pedido" placeholder="Digite o nome ou código do produto" autocomplete="off" required>
                             <datalist id="opcoes-busca-item-pedido"></datalist>
-                            <label for="item-pedido-produto">Produto</label>
-                            <select id="item-pedido-produto" required></select>
+                            <select id="item-pedido-produto" hidden aria-hidden="true" tabindex="-1"></select>
 
                             <div class="campos-lado-a-lado">
                                 <div>
