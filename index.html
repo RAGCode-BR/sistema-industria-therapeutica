@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e87861">
+    <title>Estoque Therapeutica</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <div class="sistema">
+        <aside class="menu-lateral" aria-label="Menu principal">
+            <div class="logo">
+                <img class="logo-nav" src="./assets/img/therapeutica-logo-01.png">
+            </div>
+
+            <nav class="menu-navegacao" id="menu-navegacao">
+                <div class="grupo-menu" id="menu-matriz">
+                    <p class="rotulo-menu">Centro de Distribuição</p>
+                    <button class="item-menu menu-ativo" data-pagina="dashboard"><span class="icone icone-inicio" aria-hidden="true"></span><span>Início</span></button>
+                    <button class="item-menu" data-pagina="produtos"><span class="icone icone-produtos" aria-hidden="true"></span><span>Meu estoque</span></button>
+                    <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="entrada"><span class="icone icone-entrada" aria-hidden="true"></span><span>Entradas</span></button>
+                    <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="saida"><span class="icone icone-saida" aria-hidden="true"></span><span>Saídas</span></button>
+                    <button class="item-menu" data-pagina="estoque-baixo"><span class="icone icone-alerta" aria-hidden="true"></span><span>Estoque baixo</span></button>
+                    <button class="item-menu" data-pagina="pedidos"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Pedidos das filiais</span><span class="notificacao-pedidos" id="notificacao-pedidos" hidden aria-label="Nenhum pedido pendente">0</span></button>
+                    <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
+                    <button class="item-menu" data-pagina="historico"><span class="icone icone-historico" aria-hidden="true"></span><span>Histórico</span></button>
+                    <button class="item-menu" data-pagina="usuarios"><span class="icone icone-usuarios" aria-hidden="true"></span><span>Usuários</span></button>
+                    <button class="item-menu" type="button" id="botao-configuracoes" aria-expanded="false"><span class="icone icone-config" aria-hidden="true"></span><span>Configurações</span></button>
+                    <div class="submenu-configuracoes" id="submenu-configuracoes" hidden>
+                        <button class="item-menu item-submenu" type="button" data-pagina="configuracoes-cadastros"><span>Cadastros do estoque</span></button>
+                        <button class="item-menu item-submenu" type="button" data-pagina="configuracoes-backup"><span>Dados e backup</span></button>
+                    </div>
+                </div>
+
+                <div class="grupo-menu" id="menu-filial" hidden>
+                    <p class="rotulo-menu">Portal da filial</p>
+                    <button class="item-menu" data-pagina="portal-filial"><span class="icone icone-inicio" aria-hidden="true"></span><span>Início</span></button>
+                    <button class="item-menu" data-pagina="novo-pedido-filial"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Novo pedido</span></button>
+                    <button class="item-menu" data-pagina="meus-pedidos"><span class="icone icone-historico" aria-hidden="true"></span><span>Meus pedidos</span></button>
+                </div>
+            </nav>
+
+            <button class="botao-recolher-menu" type="button" id="botao-recolher-menu" aria-controls="menu-navegacao" aria-expanded="true" aria-label="Recolher barra lateral" title="Recolher barra lateral">
+                <span class="icone icone-recolher-menu" aria-hidden="true"></span>
+                <span class="texto-botao-recolher">Recolher menu</span>
+            </button>
+
+        </aside>
+
+        <div class="conteudo">
+            <header class="cabecalho-mobile">
+                <button class="botao-cabecalho-mobile" type="button" id="botao-menu-mobile" aria-controls="menu-navegacao" aria-expanded="false" aria-label="Abrir menu de navegacao">
+                    <span class="icone icone-menu" aria-hidden="true"></span>
+                </button>
+                <img class="logo-mobile" src="./assets/img/therapeutica-logo-01.png" alt="Therapeutica Pharmacia">
+                <div class="acoes-cabecalho-mobile">
+                    <button class="botao-cabecalho-mobile" type="button" id="botao-seletor-mobile" aria-controls="painel-seletor-mobile" aria-expanded="false" aria-label="Selecionar centro de distribuicao ou filial">
+                        <span class="icone icone-filiais" aria-hidden="true"></span>
+                    </button>
+                    <button class="botao-cabecalho-mobile botao-perfil-mobile" type="button" id="botao-perfil-mobile" aria-controls="painel-perfil-mobile" aria-expanded="false" aria-label="Abrir menu do usuário">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg>
+                    </button>
+                </div>
+                <div class="painel-seletor-mobile" id="painel-seletor-mobile" hidden>
+                    <label for="seletor-portal-mobile">Visualização
+                        <select id="seletor-portal-mobile">
+                            <option value="cd">Centro de Distribuição</option>
+                            <option value="blumenau">Filial Blumenau</option>
+                            <option value="lucas">Filial Lucas</option>
+                            <option value="sinop">Filial Sinop</option>
+                            <option value="matriz">Filial Sorriso - Indústria</option>
+                            <option value="sorriso-laboratorio">Filial Sorriso - Laboratório</option>
+                            <option value="sorriso-callcenter">Filial Sorriso - Callcenter</option>
+                            <option value="sorriso-atendimento">Filial Sorriso - Atendimento</option>
+                            <option value="sorriso-rh">Filial Sorriso - RH</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="painel-perfil-mobile" id="painel-perfil-mobile" role="menu" hidden>
+                    <button type="button" id="botao-alterar-senha-mobile" role="menuitem">Alterar senha</button>
+                    <button type="button" id="botao-sair-mobile" role="menuitem">Sair</button>
+                </div>
+            </header>
+            <header class="cabecalho">
+                <div>
+                    <p id="contexto-portal">Therapeutica Pharmacia · Centro de Distribuição</p>
+                    <h1 id="titulo-pagina">Dashboard</h1>
+                </div>
+                <div class="acoes-cabecalho">
+                    <label class="seletor-portal" for="seletor-portal">
+                        <span>Visualização</span>
+                        <select id="seletor-portal">
+                            <option value="cd">Centro de Distribuição</option>
+                            <option value="blumenau">Filial Blumenau</option>
+                            <option value="lucas">Filial Lucas</option>
+                            <option value="sinop">Filial Sinop</option>
+                            <option value="matriz">Filial Sorriso - Indústria</option>
+                            <option value="sorriso-laboratorio">Filial Sorriso - Laboratório</option>
+                            <option value="sorriso-callcenter">Filial Sorriso - Callcenter</option>
+                            <option value="sorriso-atendimento">Filial Sorriso - Atendimento</option>
+                            <option value="sorriso-rh">Filial Sorriso - RH</option>
+                        </select>
+                    </label>
+                    <div class="menu-perfil" id="menu-perfil">
+                        <p class="usuario-logado" id="usuario-logado" aria-live="polite">Olá!</p>
+                        <button class="botao-perfil" type="button" id="botao-perfil" aria-label="Abrir menu do usuário" aria-haspopup="true" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg>
+                        </button>
+                        <div class="menu-perfil-opcoes" id="menu-perfil-opcoes" role="menu" hidden>
+                            <div class="resumo-perfil" aria-label="Dados do usuário logado">
+                                <strong id="nome-usuario-logado"></strong>
+                                <span id="contexto-usuario-logado"></span>
+                            </div>
+                            <button type="button" id="botao-alterar-senha" role="menuitem">Alterar senha</button>
+                            <button type="button" id="botao-sair" role="menuitem">Sair</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main>
+                <section class="pagina pagina-ativa" id="pagina-dashboard">
+                    <section class="apresentacao">
+                        <div>
+                            <p class="destaque">Estoque central</p>
+                            <h2>Controle claro do CD para todas as filiais.</h2>
+                            <p class="texto-apresentacao">Cadastre produtos, registre movimentações e acompanhe solicitações em um só lugar.</p>
+                            <div class="acoes-apresentacao">
+                                <button class="botao-principal" type="button" data-acao="novo-produto"><span class="icone icone-plus" aria-hidden="true"></span>Cadastrar produto</button>
+                                <button class="botao-principal" type="button" data-acao="nova-entrada"><span class="icone icone-entrada" aria-hidden="true"></span>Registrar entrada</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="indicadores" aria-label="Indicadores do estoque">
+                        <article class="cartao">
+                            <p>Produtos cadastrados</p>
+                            <strong id="indicador-produtos">0</strong>
+                            <span>itens ativos</span>
+                        </article>
+                        <article class="cartao">
+                            <p>Quantidade total</p>
+                            <strong id="indicador-unidades">0</strong>
+                            <span>unidades no CD</span>
+                        </article>
+                        <article class="cartao cartao-alerta">
+                            <p>Estoque baixo</p>
+                            <strong id="indicador-estoque-baixo">0</strong>
+                            <span>produtos para revisar</span>
+                        </article>
+                        <article class="cartao">
+                            <p>Pedidos pendentes</p>
+                            <strong id="indicador-pedidos">0</strong>
+                            <span>solicitações abertas</span>
+                        </article>
+                    </section>
+
+                    <section class="painel-duplo">
+                        <article class="quadro">
+                            <div class="titulo-quadro">
+                                <h2>Últimas movimentações</h2>
+                                <button class="botao-link" type="button" data-acao="ver-historico">Ver histórico</button>
+                            </div>
+                            <div id="dashboard-movimentacoes" class="lista-resumo"></div>
+                        </article>
+                        <article class="quadro">
+                            <div class="titulo-quadro">
+                                <h2>Alertas de estoque</h2>
+                                <button class="botao-link" type="button" data-acao="ver-alertas">Ver todos</button>
+                            </div>
+                            <div id="dashboard-alertas" class="lista-resumo"></div>
+                        </article>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-produtos">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Estoque central do CD</p>
+                            <h2>Produtos</h2>
+                            <p>Cadastre, consulte, edite e movimente os itens do Centro de Distribuição.</p>
+                        </div>
+                        <button class="botao-principal" type="button" data-acao="novo-produto"><span class="icone icone-plus" aria-hidden="true"></span>Cadastrar produto</button>
+                    </div>
+
+                    <section class="filtros filtros-produtos" aria-label="Filtros de produtos">
+                        <label>
+                            <span>Buscar produto</span>
+                            <input type="search" id="busca-produtos" placeholder="Nome ou categoria">
+                        </label>
+                        <label>
+                            <span>Categoria</span>
+                            <select id="filtro-categoria">
+                                <option value="">Todas as categorias</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Status</span>
+                            <select id="filtro-status-produtos">
+                                <option value="ativos">Ativos</option>
+                                <option value="arquivados">Arquivados</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </label>
+                    </section>
+
+                    <section class="tabela-container">
+                        <div class="tabela-responsiva">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Categoria</th>
+                                        <th>
+                                            <span class="cabecalho-ordenavel">Quantidade
+                                                <button id="ordenar-quantidade" class="botao-ordenacao" type="button" aria-label="Ordenar produtos por quantidade, crescente" aria-pressed="false" title="Ordenar por quantidade: crescente">&#8593;</button>
+                                            </span>
+                                        </th>
+                                        <th>Mínimo</th>
+                                        <th>Unidade</th>
+                                        <th>Situação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-produtos"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-movimentacao">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao" id="movimentacao-subtitulo">Movimentação de estoque</p>
+                            <h2 id="movimentacao-titulo">Registrar entrada</h2>
+                            <p id="movimentacao-descricao">Registre produtos que chegaram ao Centro de Distribuição.</p>
+                        </div>
+                    </div>
+
+                    <section class="formulario-pagina-container">
+                        <form id="formulario-movimentacao" class="formulario-pagina">
+                            <div id="campo-movimento-xml">
+                                <label for="movimento-xml">Nota fiscal em XML</label>
+                                <input id="movimento-xml" type="file" accept=".xml,text/xml,application/xml">
+                                <small>Anexe uma NF-e para preencher o produto, a quantidade e a observação. O arquivo não é enviado nem armazenado.</small>
+                                <button type="button" class="botao-secundario botao-xml-remover" id="botao-remover-xml" hidden>Remover XML</button>
+                                <div id="campo-item-xml" hidden>
+                                    <label for="movimento-item-xml">Item da nota</label>
+                                    <select id="movimento-item-xml"></select>
+                                </div>
+                                <p class="mensagem-formulario" id="mensagem-xml" aria-live="polite"></p>
+                                <button type="button" class="botao-secundario" id="botao-cadastrar-produto-xml" hidden>Cadastrar produto deste item</button>
+                            </div>
+
+                            <label for="movimento-produto">Produto</label>
+                            <select id="movimento-produto" required></select>
+
+                            <div class="info-produto" id="info-produto-movimento">
+                                Selecione um produto para ver o estoque atual.
+                            </div>
+
+                            <label for="movimento-quantidade">Quantidade</label>
+                            <input id="movimento-quantidade" type="number" min="1" step="1" placeholder="Exemplo: 10" required>
+
+                            <div id="campo-movimento-filial" hidden>
+                                <label for="movimento-filial">Enviar para a filial</label>
+                                <select id="movimento-filial">
+                                    <option value="">Saída do CD</option>
+                                </select>
+                                <small>Ao selecionar uma filial, a saída será registrada como transferência direta.</small>
+                            </div>
+
+                            <label for="movimento-observacao">Observação</label>
+                            <textarea id="movimento-observacao" rows="4" placeholder="Exemplo: Nota fiscal, motivo da saída ou responsável"></textarea>
+
+                            <p class="mensagem-formulario" id="mensagem-movimentacao" aria-live="polite"></p>
+
+                            <div class="acoes-formulario">
+                                <button class="botao-principal" type="submit" id="botao-confirmar-movimento">Confirmar entrada</button>
+                            </div>
+                        </form>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-estoque-baixo">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Atenção necessária</p>
+                            <h2>Estoque baixo</h2>
+                            <p>Itens cuja quantidade atual está igual ou abaixo do mínimo definido.</p>
+                        </div>
+                    </div>
+                    <section class="tabela-container">
+                        <div class="tabela-responsiva">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Categoria</th>
+                                        <th>Atual</th>
+                                        <th>Mínimo</th>
+                                        <th>Unidade</th>
+                                        <th>Ação rápida</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-estoque-baixo"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-pedidos">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Solicitações das filiais</p>
+                            <h2>Pedidos</h2>
+                            <p>As filiais informam seu estoque atual antes de solicitar itens ao CD.</p>
+                        </div>
+                        <p class="aviso-fluxo">Pedidos são criados pelos portais das filiais e podem conter vários itens.</p>
+                    </div>
+                    <div class="filtros filtros-status-pedidos">
+                        <label for="filtro-status-pedidos">Filtrar por status
+                            <select id="filtro-status-pedidos">
+                                <option value="">Todos os status</option>
+                                <option value="com_item_pendente">Pendente</option>
+                                <option value="recusado">Recusado</option>
+                                <option value="aprovado">Aprovado</option>
+                                <option value="aguardando_compra">Aguardando compra</option>
+                                <option value="em_transito">A caminho</option>
+                                <option value="recebido">Recebido</option>
+                            </select>
+                        </label>
+                    </div>
+                    <section class="tabela-container">
+                        <div class="tabela-responsiva">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Filial</th>
+                                        <th>Lista solicitada</th>
+                                        <th>Situação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-pedidos"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-portal-filial">
+                    <section class="apresentacao apresentacao-filial">
+                        <div>
+                            <p class="destaque">Portal da filial</p>
+                            <h2 id="titulo-portal-filial">Filial Therapeutica</h2>
+                            <p class="texto-apresentacao">Envie uma lista de itens para a análise do CD.</p>
+                            <div class="acoes-apresentacao">
+                                <button class="botao-principal" type="button" data-acao="abrir-novo-pedido-filial"><span class="icone icone-plus" aria-hidden="true"></span>Criar pedido</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="indicadores" aria-label="Indicadores da filial">
+                        <article class="cartao cartao-alerta">
+                            <p>Pedidos em aberto</p>
+                            <strong id="indicador-filial-pedidos">0</strong>
+                            <span>Aguardando CD</span>
+                        </article>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-novo-pedido-filial">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Solicitação para o CD</p>
+                            <h2>Novo pedido</h2>
+                            <p>Monte uma lista e informe manualmente o estoque atual de cada produto.</p>
+                        </div>
+                    </div>
+
+                    <section class="pedido-lista-layout">
+                        <form id="formulario-item-pedido" class="formulario-pagina-container formulario-item-pedido">
+                            <h3>Adicionar item</h3>
+                            <label for="item-pedido-produto">Produto</label>
+                            <select id="item-pedido-produto" required></select>
+
+                            <div class="campos-lado-a-lado">
+                                <div>
+                                    <label for="item-pedido-estoque">Estoque atual na filial</label>
+                                    <input type="number" id="item-pedido-estoque" min="0" step="1" placeholder="0" required>
+                                </div>
+                                <div>
+                                    <label for="item-pedido-quantidade">Quantidade solicitada</label>
+                                    <input type="number" id="item-pedido-quantidade" min="1" step="1" placeholder="0" required>
+                                </div>
+                            </div>
+
+                            <p class="mensagem-formulario" id="mensagem-item-pedido" aria-live="polite"></p>
+                            <button class="botao-secundario" type="submit">Adicionar à lista</button>
+                        </form>
+
+                        <section class="carrinho-pedido">
+                            <div class="titulo-quadro">
+                                <h3>Lista do pedido</h3>
+                                <span id="quantidade-itens-carrinho">0 itens</span>
+                            </div>
+                            <div id="itens-carrinho-pedido" class="lista-carrinho"></div>
+                            <label for="observacao-pedido-completo">Observação geral (opcional)</label>
+                            <textarea id="observacao-pedido-completo" rows="3" placeholder="Exemplo: Pedido para reposição da próxima semana"></textarea>
+                            <p class="mensagem-formulario" id="mensagem-pedido-filial" aria-live="polite"></p>
+                            <div class="acoes-formulario">
+                                <button type="button" class="botao-secundario" id="botao-limpar-carrinho">Limpar lista</button>
+                                <button type="button" class="botao-principal" id="botao-enviar-pedido-lista">Enviar pedido ao CD</button>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-meus-pedidos">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Acompanhamento da filial</p>
+                            <h2>Meus pedidos</h2>
+                            <p>Veja as listas enviadas e a resposta do CD.</p>
+                        </div>
+                    </div>
+                    <div class="filtros filtros-status-pedidos">
+                        <label for="filtro-status-meus-pedidos">Filtrar por status
+                            <select id="filtro-status-meus-pedidos">
+                                <option value="">Todos os status</option>
+                                <option value="recusado">Recusado</option>
+                                <option value="aguardando_compra">Aguardando compra</option>
+                                <option value="em_transito">A caminho</option>
+                                <option value="recebido">Recebido</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div id="lista-meus-pedidos" class="lista-pedidos-filial"></div>
+                </section>
+
+                <section class="pagina" id="pagina-filiais">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Rede Therapeutica</p>
+                            <h2>Filiais</h2>
+                            <p>Visão das filiais que farão pedidos ao Centro de Distribuição.</p>
+                        </div>
+                    </div>
+                    <div class="grade-filiais" id="lista-filiais"></div>
+                </section>
+
+                <section class="pagina" id="pagina-historico">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Rastreabilidade</p>
+                            <h2>Histórico</h2>
+                            <p>Registro de todas as entradas, saídas e transferências aprovadas.</p>
+                        </div>
+                    </div>
+                    <section class="filtros" aria-label="Filtros do histórico">
+                        <label>
+                            <span>Buscar</span>
+                            <input type="search" id="busca-historico" placeholder="Produto ou observação">
+                        </label>
+                        <label>
+                            <span>Tipo</span>
+                            <select id="filtro-historico">
+                                <option value="">Todos os tipos</option>
+                                <option value="entrada">Entradas</option>
+                                <option value="saida">Saídas</option>
+                                <option value="transferencia">Transferências</option>
+                            </select>
+                        </label>
+                    </section>
+                    <section class="tabela-container">
+                        <div class="tabela-responsiva">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Tipo</th>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Destino / observação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-historico"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-usuarios">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Acesso ao sistema</p>
+                            <h2>Usuários</h2>
+                            <p>Gerencie os perfis, papéis e filiais vinculadas ao acesso.</p>
+                        </div>
+                        <button class="botao-principal" type="button" id="botao-novo-usuario"><span class="icone icone-plus" aria-hidden="true"></span>Novo usuário</button>
+                    </div>
+                    <section class="tabela-container">
+                        <div class="tabela-responsiva">
+                            <table>
+                                <thead><tr><th>Usuário</th><th>Login</th><th>Papel</th><th>Filial</th><th>Ação</th></tr></thead>
+                                <tbody id="tabela-usuarios"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-configuracoes-cadastros">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Configurações</p>
+                            <h2>Cadastros do estoque</h2>
+                            <p>Gerencie as categorias e unidades de medida disponíveis nos produtos.</p>
+                        </div>
+                    </div>
+                    <section class="grade-configuracoes">
+                        <article class="cartao-configuracao cartao-categorias">
+                            <h3>Categorias de produtos</h3>
+                            <p>Cadastre, edite ou exclua categorias disponíveis no cadastro de produtos.</p>
+                            <form id="formulario-categoria" class="formulario-categoria">
+                                <label for="categoria-nome">Nova categoria</label>
+                                <div class="linha-formulario-categoria">
+                                    <input type="text" id="categoria-nome" maxlength="80" placeholder="Exemplo: Equipamentos" required>
+                                    <button type="submit" class="botao-principal">Adicionar</button>
+                                </div>
+                                <p class="mensagem-formulario" id="mensagem-categoria" aria-live="polite"></p>
+                            </form>
+                            <div class="tabela-responsiva tabela-categorias">
+                                <table>
+                                    <thead><tr><th>Categoria</th><th>Produtos</th><th>Ações</th></tr></thead>
+                                    <tbody id="tabela-categorias"></tbody>
+                                </table>
+                            </div>
+                        </article>
+                        <article class="cartao-configuracao cartao-categorias">
+                            <h3>Unidades de medida</h3>
+                            <p>Cadastre, edite ou exclua unidades disponíveis no cadastro de produtos.</p>
+                            <form id="formulario-unidade" class="formulario-categoria">
+                                <label for="unidade-nome">Nova unidade</label>
+                                <div class="linha-formulario-categoria">
+                                    <input type="text" id="unidade-nome" maxlength="80" placeholder="Exemplo: Metro" required>
+                                    <button type="submit" class="botao-principal">Adicionar</button>
+                                </div>
+                                <p class="mensagem-formulario" id="mensagem-unidade" aria-live="polite"></p>
+                            </form>
+                            <div class="tabela-responsiva tabela-categorias">
+                                <table>
+                                    <thead><tr><th>Unidade</th><th>Produtos</th><th>Ações</th></tr></thead>
+                                    <tbody id="tabela-unidades"></tbody>
+                                </table>
+                            </div>
+                        </article>
+                    </section>
+                </section>
+
+                <section class="pagina" id="pagina-configuracoes-backup">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Configurações</p>
+                            <h2>Dados e backup</h2>
+                            <p>Exporte uma cópia dos dados ou restaure um backup criado neste sistema.</p>
+                        </div>
+                    </div>
+                    <section class="grade-configuracoes grade-backups-configuracoes">
+                        <article class="cartao-configuracao">
+                            <h3>Exportar backup</h3>
+                            <p>Baixe produtos, pedidos e histórico em um arquivo JSON.</p>
+                            <button type="button" class="botao-principal" id="botao-exportar">Baixar backup</button>
+                        </article>
+                        <article class="cartao-configuracao">
+                            <h3>Importar backup</h3>
+                            <p>Restaure dados previamente exportados neste mesmo sistema.</p>
+                            <label class="botao-secundario" for="arquivo-importar">Escolher arquivo</label>
+                            <input type="file" id="arquivo-importar" accept="application/json" hidden>
+                        </article>
+                    </section>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-produto" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-produto">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Catálogo do CD</p>
+                    <h2 id="titulo-modal-produto">Cadastrar produto</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-produto" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-produto" class="formulario-modal">
+                <input type="hidden" id="produto-id">
+                <label for="produto-codigo">Código interno (opcional)</label>
+                <input type="text" id="produto-codigo" maxlength="30" placeholder="Exemplo: ALM-001">
+
+                <label for="produto-nome">Nome do produto</label>
+                <input type="text" id="produto-nome" maxlength="100" placeholder="Exemplo: Fita adesiva" required>
+
+                <label for="produto-categoria">Categoria</label>
+                <select id="produto-categoria" required>
+                    <option value="">Selecione uma categoria</option>
+                </select>
+
+                <div class="campos-lado-a-lado">
+                    <div>
+                        <label for="produto-quantidade">Quantidade inicial</label>
+                        <input type="number" id="produto-quantidade" min="0" step="1" placeholder="0" required>
+                        <small id="ajuda-quantidade-produto">Depois use entradas e saídas para alterar o estoque.</small>
+                    </div>
+                    <div>
+                        <label for="produto-minimo">Estoque mínimo</label>
+                        <input type="number" id="produto-minimo" min="0" step="1" placeholder="0" required>
+                    </div>
+                </div>
+
+                <label for="produto-unidade">Unidade de medida</label>
+                <select id="produto-unidade" required>
+                    <option value="">Selecione uma unidade</option>
+                </select>
+
+                <p class="mensagem-formulario" id="mensagem-produto" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-produto">Cancelar</button>
+                    <button type="submit" class="botao-principal">Salvar produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-pedido" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-pedido">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Solicitação ao CD</p>
+                    <h2 id="titulo-modal-pedido">Criar pedido</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-pedido" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-pedido" class="formulario-modal">
+                <label for="pedido-filial">Filial</label>
+                <select id="pedido-filial" required></select>
+
+                <label for="pedido-produto">Produto solicitado</label>
+                <select id="pedido-produto" required></select>
+
+                <div class="campos-lado-a-lado">
+                    <div>
+                        <label for="pedido-estoque-atual">Estoque atual na filial</label>
+                        <input type="number" id="pedido-estoque-atual" min="0" step="1" placeholder="0" required>
+                    </div>
+                    <div>
+                        <label for="pedido-quantidade">Quantidade solicitada</label>
+                        <input type="number" id="pedido-quantidade" min="1" step="1" placeholder="0" required>
+                    </div>
+                </div>
+
+                <label for="pedido-observacao">Observação</label>
+                <textarea id="pedido-observacao" rows="3" placeholder="Exemplo: Material necessário para a semana"></textarea>
+
+                <p class="mensagem-formulario" id="mensagem-pedido" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-pedido">Cancelar</button>
+                    <button type="submit" class="botao-principal">Enviar pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-entrega" aria-hidden="true">
+        <div class="modal-conteudo modal-entrega-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-entrega">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Aprovação do CD</p>
+                    <h2 id="titulo-modal-entrega">Data prevista de entrega</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-entrega" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-entrega" class="formulario-modal">
+                <input type="hidden" id="entrega-pedido-id">
+                <input type="hidden" id="entrega-modo">
+                <p class="texto-apoio" id="entrega-resumo">Selecione quando a filial deve receber este pedido.</p>
+
+                <label id="campo-entrega-quantidade" for="entrega-quantidade" hidden>
+                    Quantidade a enviar
+                    <input type="number" id="entrega-quantidade" min="1" step="1" required>
+                    <small id="ajuda-entrega-quantidade"></small>
+                </label>
+
+                <div class="data-entrega-grid" id="campo-entrega-data">
+                    <label for="entrega-dia">
+                        <span>Dia</span>
+                        <select id="entrega-dia" required></select>
+                    </label>
+                    <label for="entrega-mes">
+                        <span>Mês</span>
+                        <select id="entrega-mes" required></select>
+                    </label>
+                    <label for="entrega-ano">
+                        <span>Ano</span>
+                        <select id="entrega-ano" required></select>
+                    </label>
+                </div>
+
+                <p class="mensagem-formulario" id="mensagem-entrega" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-entrega">Cancelar</button>
+                    <button type="submit" class="botao-principal" id="botao-confirmar-data">Aprovar envio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-analisar-pedido" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-analisar-pedido">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Análise por item</p><h2 id="titulo-modal-analisar-pedido">Pedido da filial</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-analisar-pedido" aria-label="Fechar">×</button>
+            </div>
+            <p class="texto-apoio">Escolha a ação individual de cada produto. Itens já analisados permanecem visíveis para acompanhamento.</p>
+            <div id="lista-analisar-pedido" class="itens-pedido-resumo"></div>
+            <div class="acoes-formulario">
+                <button type="button" class="botao-principal" id="botao-enviar-pedido-analisado" disabled>Enviar pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-usuario" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-usuario">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Controle de acesso</p><h2 id="titulo-modal-usuario">Editar usuário</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-usuario" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-usuario" class="formulario-modal">
+                <input type="hidden" id="usuario-id">
+                <label for="usuario-email">Login</label>
+                <input type="text" id="usuario-email" required autocomplete="username" maxlength="40" placeholder="Exemplo: gabriel.silva">
+                <label for="usuario-nome">Nome</label>
+                <input type="text" id="usuario-nome" maxlength="120" required>
+                <div id="campo-senha-inicial" hidden>
+                    <label for="usuario-senha-inicial">Senha inicial</label>
+                    <input type="password" id="usuario-senha-inicial" minlength="8" autocomplete="new-password">
+                    <small>Definida pelo administrador. O usuário poderá alterá-la depois.</small>
+                </div>
+                <div id="campo-senha-temporaria" hidden>
+                    <label for="usuario-senha-temporaria">Nova senha temporária</label>
+                    <input type="password" id="usuario-senha-temporaria" minlength="8" autocomplete="new-password">
+                    <small>Válida por 48 horas. No próximo acesso, o usuário deverá criar uma senha definitiva.</small>
+                </div>
+                <label for="usuario-papel">Papel</label>
+                <select id="usuario-papel" required><option value="filial">Filial</option><option value="cd_admin">Administrador do CD</option></select>
+                <label for="usuario-filial">Filial vinculada</label>
+                <select id="usuario-filial"><option value="">Sem filial</option><option value="blumenau">Blumenau</option><option value="lucas">Lucas do Rio Verde</option><option value="sinop">Sinop</option><option value="matriz">Sorriso - Indústria</option><option value="sorriso-laboratorio">Sorriso - Laboratório</option><option value="sorriso-callcenter">Sorriso - Callcenter</option><option value="sorriso-atendimento">Sorriso - Atendimento</option><option value="sorriso-rh">Sorriso - RH</option></select>
+                <p class="mensagem-formulario" id="mensagem-usuario" aria-live="polite"></p>
+                <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-usuario">Cancelar</button><button type="submit" class="botao-principal" id="botao-salvar-usuario">Salvar alterações</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-alterar-senha" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-alterar-senha">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Minha conta</p><h2 id="titulo-modal-alterar-senha">Alterar senha</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-alterar-senha" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-alterar-senha" class="formulario-modal">
+                <label for="nova-senha-usuario">Nova senha</label>
+                <input type="password" id="nova-senha-usuario" minlength="8" autocomplete="new-password" required>
+                <label for="confirmar-nova-senha-usuario">Confirmar nova senha</label>
+                <input type="password" id="confirmar-nova-senha-usuario" minlength="8" autocomplete="new-password" required>
+                <p class="mensagem-formulario" id="mensagem-alterar-senha" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-alterar-senha">Cancelar</button>
+                    <button type="submit" class="botao-principal" id="botao-salvar-nova-senha">Salvar nova senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-estoque-filial" aria-hidden="true">
+        <div class="modal-conteudo modal-estoque-filial-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-estoque-filial">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Consulta do CD</p><h2 id="titulo-modal-estoque-filial">Estoque da filial</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-estoque-filial" aria-label="Fechar">×</button>
+            </div>
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Unidade</th><th>Atualização</th></tr></thead>
+                    <tbody id="tabela-modal-estoque-filial"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-confirmar-recebimento" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-confirmar-recebimento">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Recebimento da filial</p><h2 id="titulo-modal-confirmar-recebimento">Conferir itens do pedido</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-confirmar-recebimento" aria-label="Fechar">×</button>
+            </div>
+            <p class="texto-apoio">Confira os itens enviados e os cancelados pelo Centro de Distribuição antes de confirmar o recebimento.</p>
+            <div class="itens-pedido-resumo" id="lista-confirmacao-recebimento"></div>
+            <div class="acoes-formulario">
+                <button type="button" class="botao-secundario" data-fechar-modal="modal-confirmar-recebimento">Cancelar</button>
+                <button type="button" class="botao-principal" id="botao-confirmar-itens-recebidos">Confirmar recebimento dos itens enviados</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-detalhes-pedido" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-detalhes-pedido">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Acompanhamento da filial</p><h2 id="titulo-modal-detalhes-pedido">Detalhes do pedido</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-detalhes-pedido" aria-label="Fechar">&times;</button>
+            </div>
+            <p class="texto-apoio" id="resumo-detalhes-pedido"></p>
+            <div class="lista-detalhes-pedido" id="lista-detalhes-pedido"></div>
+            <div class="acoes-formulario">
+                <button type="button" class="botao-secundario" data-fechar-modal="modal-detalhes-pedido">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+    <script src="./assets/js/env.js"></script>
+    <script src="./assets/js/supabase-client.js"></script>
+    <script src="./assets/js/script.js"></script>
+</body>
+</html>

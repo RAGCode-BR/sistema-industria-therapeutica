@@ -1,0 +1,71 @@
+const olho = document.querySelector('#botaoOlho');
+const senha = document.querySelector('#senhaLogin');
+
+if (olho && senha) {
+    olho.addEventListener('mousedown', (evento) => evento.preventDefault());
+    olho.addEventListener('click', () => {
+        const senhaVisivel = senha.type === 'text';
+        senha.type = senhaVisivel ? 'password' : 'text';
+        olho.classList.toggle('fa-eye-slash', !senhaVisivel);
+        olho.classList.toggle('fa-eye', senhaVisivel);
+        olho.setAttribute('aria-label', senhaVisivel ? 'Mostrar senha' : 'Ocultar senha');
+    });
+}
+
+const formulario = document.querySelector('#formulario-login');
+const email = document.querySelector('#email-login');
+const mensagem = document.querySelector('#mensagem-login');
+const manterConectado = document.querySelector('#manter-conectado');
+
+if (manterConectado) {
+    manterConectado.checked = manterSessaoEntreNavegacoes();
+    manterConectado.addEventListener('change', () => configurarPersistenciaSessao(manterConectado.checked));
+}
+
+function informar(texto, erro = true) {
+    mensagem.textContent = texto;
+    mensagem.style.color = erro ? '#a94332' : '#486b34';
+}
+
+function emailParaLogin(identificador) {
+    const valor = identificador.trim();
+    if (valor.includes("@")) return valor;
+    const login = valor.normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ".")
+        .replace(/^\.+|\.+$/g, "");
+    return `${login}@usuarios.therapeutica.local`;
+}
+
+formulario?.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    configurarPersistenciaSessao(manterConectado?.checked ?? true);
+    const cliente = obterClienteSupabase();
+    if (!cliente) return informar('Não foi possível carregar o serviço de login.');
+    informar('Entrando...', false);
+    const { data, error } = await cliente.auth.signInWithPassword({ email: emailParaLogin(email.value), password: senha.value });
+    if (error) return informar('E-mail ou senha inválidos.');
+    const { data: perfil, error: erroPerfil } = await cliente.from('usuarios')
+        .select('deve_alterar_senha, senha_temporaria_ate')
+        .eq('id', data.user.id)
+        .single();
+    if (erroPerfil || !perfil) {
+        await cliente.auth.signOut();
+        return informar('Não foi possível validar o acesso deste usuário.');
+    }
+    if (perfil.deve_alterar_senha) {
+        const expirada = !perfil.senha_temporaria_ate || new Date(perfil.senha_temporaria_ate).getTime() <= Date.now();
+        if (expirada) {
+            await cliente.auth.signOut();
+            return informar('Sua senha temporária expirou. Solicite uma nova senha ao administrador.');
+        }
+        window.location.replace('./redefinir-senha.html?temporaria=1');
+        return;
+    }
+    window.location.replace('./index.html');
+});
+
+if (new URLSearchParams(window.location.search).get('senha-expirada') === '1') {
+    informar('Sua senha temporária expirou. Solicite uma nova senha ao administrador.');
+}

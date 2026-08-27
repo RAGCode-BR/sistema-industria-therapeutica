@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e87861">
+    <title>Estoque Therapeutica - Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./assets/css/login.css">
+</head>
+<body>
+    <form class="card-login" id="formulario-login">
+        <img class="logo" src="./assets/img/therapeutica-logo-01.png"> 
+        <div class="cabecalho-login">
+            <h1>Entrar</h1>
+            <span>Use suas credenciais para acessar o sistema.</span>
+        </div>
+        <input type="text" class="loginUsuario" id="email-login" placeholder="Login ou e-mail" required autocomplete="username">
+        <div class="olhoLogin">
+            <input type="password" class="senhaUsuario" id="senhaLogin" placeholder="Senha" required autocomplete="current-password">
+            <button type="button" class="botao-olho fa fa-eye" id="botaoOlho" aria-label="Mostrar senha"></button>
+        </div>
+
+        <button type="submit" class="botao-logar" id="botaoLogar">Entrar</button>
+        <label class="opcao-manter-conectado" for="manter-conectado">
+            <input type="checkbox" id="manter-conectado" checked>
+            <span>Manter-se conectado</span>
+        </label>
+        <p class="mensagem-autenticacao" id="mensagem-login" role="status" aria-live="polite"></p>
+        <div class="div-opcoes">
+            <a href="./recuperar-senha.html" id="esqueci-senha">Esqueci a minha senha</a>
+        </div>
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+    <script src="./assets/js/env.js"></script>
+    <script src="./assets/js/supabase-client.js"></script>
+    <script src="./assets/js/login.js"></script>
+</body>
+</html>
