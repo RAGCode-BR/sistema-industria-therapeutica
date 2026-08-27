@@ -1471,12 +1471,25 @@ function renderizarDashboard() {
                 : movimentacao.tipo === "saida"
                     ? "valor-negativo"
                     : "valor-transferencia";
+            const icone = movimentacao.tipo === "entrada"
+                ? "icone-entrada"
+                : movimentacao.tipo === "saida"
+                    ? "icone-saida"
+                    : "icone-filiais";
+            const classeIcone = movimentacao.tipo === "entrada"
+                ? ""
+                : movimentacao.tipo === "saida"
+                    ? " resumo-icone-saida"
+                    : " resumo-icone-transferencia";
 
             return `
                 <div class="resumo-linha">
-                    <div>
+                    <div class="resumo-item-principal">
+                        <span class="resumo-icone${classeIcone}" aria-hidden="true"><span class="icone ${icone}"></span></span>
+                        <div>
                         <strong>${escaparHTML(movimentacao.produtoNome)}</strong>
                         <span>${textoTipoMovimentacao(movimentacao.tipo)} · ${formatarData(movimentacao.criadoEm)}</span>
+                        </div>
                     </div>
                     <span class="${classe}">${sinal} ${formatarNumero(movimentacao.quantidade)} ${escaparHTML(movimentacao.unidade)}</span>
                 </div>
@@ -1487,9 +1500,12 @@ function renderizarDashboard() {
     elementos.dashboardAlertas.innerHTML = alertas.length
         ? alertas.map((produto) => `
             <div class="resumo-linha">
-                <div>
+                <div class="resumo-item-principal">
+                    <span class="resumo-icone resumo-icone-alerta" aria-hidden="true"><span class="icone icone-alerta"></span></span>
+                    <div>
                     <strong>${escaparHTML(produto.nome)}</strong>
                     <span>Mínimo definido: ${formatarNumero(produto.estoqueMinimo)} ${escaparHTML(produto.unidade)}</span>
+                    </div>
                 </div>
                 <span class="valor-negativo">${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</span>
             </div>
@@ -1540,9 +1556,9 @@ function renderizarProdutos() {
             const dataArquivamento = produto.arquivadoEm ? `<span class="detalhe-celula">Arquivado em ${formatarData(produto.arquivadoEm)}</span>` : "";
             const acoes = produto.ativo
                 ? `
-                    <button type="button" class="botao-acao" data-acao="editar-produto" data-produto-id="${produto.id}">Editar</button>
-                    <button type="button" class="botao-acao acao-perigo" data-acao="arquivar-produto" data-produto-id="${produto.id}">Arquivar</button>
-                    <button type="button" class="botao-acao acao-perigo" data-acao="excluir-produto" data-produto-id="${produto.id}">Excluir</button>
+                    <button type="button" class="botao-acao" data-acao="editar-produto" data-produto-id="${produto.id}"><span class="icone icone-editar" aria-hidden="true"></span>Editar</button>
+                    <button type="button" class="botao-acao acao-perigo" data-acao="arquivar-produto" data-produto-id="${produto.id}"><span class="icone icone-arquivar" aria-hidden="true"></span>Arquivar</button>
+                    <button type="button" class="botao-acao acao-perigo" data-acao="excluir-produto" data-produto-id="${produto.id}"><span class="icone icone-excluir" aria-hidden="true"></span>Excluir</button>
                 `
                 : `<button type="button" class="botao-acao acao-restaurar" data-acao="restaurar-produto" data-produto-id="${produto.id}">Restaurar</button>`;
 

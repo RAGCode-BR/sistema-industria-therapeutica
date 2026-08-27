@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#e87861">
     <title>Sistema de Compras - Therapeutica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
 </head>
 <body>
@@ -115,6 +118,11 @@
             <main>
                 <section class="pagina pagina-ativa" id="pagina-dashboard">
                     <section class="apresentacao">
+                        <div class="decoracao-hero" aria-hidden="true">
+                            <span class="face-caixa face-caixa-topo"></span>
+                            <span class="face-caixa face-caixa-frente"></span>
+                            <span class="face-caixa face-caixa-lateral"></span>
+                        </div>
                         <div>
                             <p class="destaque">Estoque central</p>
                             <h2>Controle claro do CD para todas as filiais.</h2>
@@ -127,25 +135,37 @@
                     </section>
 
                     <section class="indicadores" aria-label="Indicadores do estoque">
-                        <article class="cartao">
+                        <article class="cartao cartao-produtos">
+                            <span class="indicador-icone" aria-hidden="true"><span class="icone icone-produtos"></span></span>
+                            <div class="indicador-conteudo">
                             <p>Produtos cadastrados</p>
                             <strong id="indicador-produtos">0</strong>
                             <span>itens ativos</span>
+                            </div>
                         </article>
-                        <article class="cartao">
+                        <article class="cartao cartao-unidades">
+                            <span class="indicador-icone" aria-hidden="true"><span class="icone icone-produtos"></span></span>
+                            <div class="indicador-conteudo">
                             <p>Quantidade total</p>
                             <strong id="indicador-unidades">0</strong>
                             <span>unidades no CD</span>
+                            </div>
                         </article>
                         <article class="cartao cartao-alerta">
+                            <span class="indicador-icone" aria-hidden="true"><span class="icone icone-alerta"></span></span>
+                            <div class="indicador-conteudo">
                             <p>Estoque baixo</p>
                             <strong id="indicador-estoque-baixo">0</strong>
                             <span>produtos para revisar</span>
+                            </div>
                         </article>
-                        <article class="cartao">
+                        <article class="cartao cartao-pedidos">
+                            <span class="indicador-icone" aria-hidden="true"><span class="icone icone-pedidos"></span></span>
+                            <div class="indicador-conteudo">
                             <p>Pedidos pendentes</p>
                             <strong id="indicador-pedidos">0</strong>
                             <span>solicitações abertas</span>
+                            </div>
                         </article>
                     </section>
 
@@ -180,7 +200,10 @@
                     <section class="filtros filtros-produtos" aria-label="Filtros de produtos">
                         <label>
                             <span>Buscar produto</span>
-                            <input type="search" id="busca-produtos" placeholder="Nome ou categoria">
+                            <span class="campo-busca">
+                                <span class="icone icone-pesquisa" aria-hidden="true"></span>
+                                <input type="search" id="busca-produtos" placeholder="Nome ou categoria">
+                            </span>
                         </label>
                         <label>
                             <span>Categoria</span>
