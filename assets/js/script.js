@@ -1647,7 +1647,7 @@ function renderizarPedidos() {
             const acoes = haItensPendentes
                 ? `<button type="button" class="botao-acao acao-aprovar" data-acao="analisar-pedido" data-pedido-id="${pedido.id}">Analisar itens</button>`
                 : situacao === "em_producao"
-                    ? `<button type="button" class="botao-acao acao-aprovar" data-acao="agendar-envio-pedido" data-pedido-id="${pedido.id}">Agendar envio</button>`
+                    ? `<button type="button" class="botao-acao acao-aprovar" data-acao="agendar-envio-pedido" data-pedido-id="${pedido.id}">Informar data de envio</button>`
                     : situacao === "agendado_envio"
                         ? `<button type="button" class="botao-acao acao-aprovar" data-acao="enviar-pedido-produzido" data-pedido-id="${pedido.id}">Confirmar envio</button>`
                 : `<button type="button" class="botao-acao" data-acao="consultar-pedido" data-pedido-id="${pedido.id}">Consultar pedido</button>`;
@@ -2270,9 +2270,9 @@ function configurarModalDataPedido(pedido, modo) {
             botao: "Aprovar envio"
         },
         enviar_pedido: {
-            titulo: "Agendar envio",
-            resumo: `Informe a data prevista para enviar o pedido à ${filial?.nome || "filial"}. A filial será informada, mas o estoque só será baixado na confirmação do envio.`,
-            botao: "Agendar envio"
+            titulo: "Data de envio",
+            resumo: `Informe a data de envio para ${filial?.nome || "a filial"}. Ao confirmar, o pedido será enviado e a filial será informada.`,
+            botao: "Registrar envio"
         },
         compra: {
             titulo: "Previsão de chegada no CD",
@@ -2479,7 +2479,9 @@ function abrirModalEnviarPedido(pedidoId) {
     }
 
     itensSelecionadosPedido = [];
-    configurarModalDataPedido(pedido, "iniciar_producao");
+    const itensAprovados = itensDoPedido(pedido).filter((item) => situacaoDoItemPedido(item, pedido) === "aprovado");
+    const estoqueInsuficiente = itensAprovados.some((item) => (buscarProduto(item.produtoId)?.quantidade || 0) < item.quantidadeEnviada);
+    configurarModalDataPedido(pedido, estoqueInsuficiente ? "iniciar_producao" : "enviar_pedido");
 }
 
 function iniciarProducaoPedido(pedidoId, prazoProducao) {
@@ -2545,22 +2547,37 @@ function enviarPedidoProduzido(pedidoId) {
     notificar("Pedido enviado para a filial.");
 }
 
-function agendarEnvioPedido(pedidoId, dataEnvio) {
+function enviarPedidoComData(pedidoId, dataEnvio) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
-    const itens = pedido && itensDoPedido(pedido).filter((item) => situacaoDoItemPedido(item, pedido) === "em_producao");
+    const itens = pedido && itensDoPedido(pedido).filter((item) => ["aprovado", "em_producao"].includes(situacaoDoItemPedido(item, pedido)));
     if (!pedido || !itens?.length) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEnvio) || Number.isNaN(new Date(`${dataEnvio}T12:00:00`).getTime())) {
         elementos.mensagemEntrega.textContent = "Escolha uma data de envio válida.";
         return;
     }
-    itens.forEach((item) => { item.situacao = "agendado_envio"; });
+    const indisponiveis = itens.filter((item) => (buscarProduto(item.produtoId)?.quantidade || 0) < item.quantidadeEnviada);
+    if (indisponiveis.length) {
+        notificar("O estoque ainda não é suficiente para enviar este pedido. Informe um prazo de produção.", "erro");
+        return;
+    }
+    const agora = new Date().toISOString();
+    itens.forEach((item) => {
+        const produto = buscarProduto(item.produtoId);
+        const saldoAntes = produto.quantidade;
+        produto.quantidade -= item.quantidadeEnviada;
+        produto.atualizadoEm = agora;
+        item.situacao = "em_transito";
+        registrarMovimentacao({ produto, tipo: "transferencia", quantidade: item.quantidadeEnviada, saldoAntes, saldoDepois: produto.quantidade, observacao: pedido.observacao || `Envio programado para ${formatarDataSimples(dataEnvio)}.`, filialId: pedido.filialId, pedidoId: pedido.id });
+    });
     atualizarSituacaoDoPedido(pedido);
     pedido.envioPrevisto = dataEnvio;
-    pedido.observacaoMatriz = `Envio agendado pelo CD para ${formatarDataSimples(dataEnvio)}.`;
+    pedido.enviadoEm = agora;
+    pedido.entregaPrevista = dataEnvio;
+    pedido.observacaoMatriz = `Pedido enviado pelo CD. Data de envio: ${formatarDataSimples(dataEnvio)}.`;
     salvarEstado();
     fecharModal(elementos.modalEntrega);
     renderizarTudo();
-    notificar("Envio agendado e filial informada.");
+    notificar("Envio registrado e filial informada.");
 }
 
 function aprovarPedido(pedidoId, dataEntrega, quantidadeSelecionada = null) {
@@ -3611,7 +3628,7 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
     }
 
     if (elementos.entregaModo.value === "enviar_pedido") {
-        agendarEnvioPedido(elementos.entregaPedidoId.value, dataSelecionada);
+        enviarPedidoComData(elementos.entregaPedidoId.value, dataSelecionada);
         return;
     }
 
