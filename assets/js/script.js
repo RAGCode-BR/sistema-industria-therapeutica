@@ -189,6 +189,8 @@ const elementos = {
     tituloPortalFilial: document.querySelector("#titulo-portal-filial"),
     indicadorFilialPedidos: document.querySelector("#indicador-filial-pedidos"),
     formularioItemPedido: document.querySelector("#formulario-item-pedido"),
+    buscaItemPedido: document.querySelector("#busca-item-pedido"),
+    opcoesBuscaItemPedido: document.querySelector("#opcoes-busca-item-pedido"),
     itemPedidoProduto: document.querySelector("#item-pedido-produto"),
     itemPedidoEstoque: document.querySelector("#item-pedido-estoque"),
     itemPedidoQuantidade: document.querySelector("#item-pedido-quantidade"),
@@ -1995,6 +1997,8 @@ function renderizarPortalFilial() {
     }
 
     elementos.itemPedidoProduto.disabled = produtos.length === 0;
+    elementos.buscaItemPedido.disabled = produtos.length === 0;
+    elementos.opcoesBuscaItemPedido.innerHTML = produtos.map((produto) => `<option value="${escaparHTML(produto.codigo || produto.nome)}" label="${escaparHTML(produto.nome)}"></option>`).join("");
     atualizarEstoqueAtualDoItemPedido();
     renderizarCarrinhoPedido();
 
@@ -2059,6 +2063,13 @@ function renderizarCarrinhoPedido() {
 
 function atualizarEstoqueAtualDoItemPedido() {
     elementos.itemPedidoEstoque.value = "";
+}
+
+function selecionarProdutoPedidoPorBusca() {
+    const busca = elementos.buscaItemPedido.value.trim().toLocaleLowerCase("pt-BR");
+    if (!busca) return;
+    const produto = produtosAtivos().find((item) => item.codigo.toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca);
+    if (produto) elementos.itemPedidoProduto.value = produto.id;
 }
 
 function renderizarTudo() {
@@ -3639,6 +3650,10 @@ elementos.seletorPortal.addEventListener("change", () => {
 });
 
 elementos.itemPedidoProduto.addEventListener("change", atualizarEstoqueAtualDoItemPedido);
+elementos.buscaItemPedido.addEventListener("change", selecionarProdutoPedidoPorBusca);
+elementos.buscaItemPedido.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter") selecionarProdutoPedidoPorBusca();
+});
 
 elementos.formularioItemPedido.addEventListener("submit", (evento) => {
     evento.preventDefault();
