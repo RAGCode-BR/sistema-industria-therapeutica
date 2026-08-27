@@ -792,7 +792,7 @@ async function sincronizarPedidos(pedidos, pedidosAnteriores) {
 }
 
 function pedidoParaBanco(pedido) {
-    return { id: pedido.id, filial_id: pedido.filialId, observacao: pedido.observacao || "", observacao_matriz: pedido.observacaoMatriz || "", situacao: situacaoParaBanco(pedido.situacao), compra_prevista: pedido.compraPrevista || null, compra_recebida_em: pedido.compraRecebidaEm || null, producao_prevista: pedido.producaoPrevista || null, producao_iniciada_em: pedido.producaoIniciadaEm || null, enviado_em: pedido.enviadoEm || null, entrega_prevista: pedido.entregaPrevista || null, recebido_em: pedido.recebidoEm || null, criado_em: pedido.criadoEm, analisado_em: pedido.analisadoEm || null, atualizado_em: pedido.atualizadoEm };
+    return { id: pedido.id, filial_id: pedido.filialId, observacao: pedido.observacao || "", observacao_matriz: pedido.observacaoMatriz || "", situacao: situacaoParaBanco(pedido.situacao), compra_prevista: pedido.compraPrevista || null, compra_recebida_em: pedido.compraRecebidaEm || null, producao_prevista: pedido.producaoPrevista || null, producao_iniciada_em: pedido.producaoIniciadaEm || null, envio_previsto: pedido.envioPrevisto || null, enviado_em: pedido.enviadoEm || null, entrega_prevista: pedido.entregaPrevista || null, recebido_em: pedido.recebidoEm || null, criado_em: pedido.criadoEm, analisado_em: pedido.analisadoEm || null, atualizado_em: pedido.atualizadoEm };
 }
 
 function situacaoParaBanco(situacao) {
@@ -921,7 +921,7 @@ async function carregarDadosSupabase() {
             }),
             observacao: pedido.observacao, observacaoMatriz: pedido.observacao_matriz, situacao: pedido.situacao,
             compraPrevista: pedido.compra_prevista || "", compraRecebidaEm: pedido.compra_recebida_em,
-            producaoPrevista: pedido.producao_prevista || "", producaoIniciadaEm: pedido.producao_iniciada_em || null, enviadoEm: pedido.enviado_em || null,
+            producaoPrevista: pedido.producao_prevista || "", producaoIniciadaEm: pedido.producao_iniciada_em || null, envioPrevisto: pedido.envio_previsto || "", enviadoEm: pedido.enviado_em || null,
             entregaPrevista: pedido.entrega_prevista || "", recebidoEm: pedido.recebido_em,
             criadoEm: pedido.criado_em, analisadoEm: pedido.analisado_em, atualizadoEm: pedido.atualizado_em
         })),
@@ -1053,6 +1053,7 @@ function situacaoDoPedido(pedido) {
     if (situacoes.every((situacao) => situacao === "recusado")) return "recusado";
     if (situacoes.every((situacao) => situacao === "recebido" || situacao === "recusado")) return "recebido";
     if (situacoes.includes("em_transito")) return "em_transito";
+    if (situacoes.includes("agendado_envio")) return "agendado_envio";
     if (situacoes.includes("em_producao")) return "em_producao";
     if (situacoes.includes("aprovado")) return "aprovado";
     if (situacoes.includes("aguardando_compra")) return "aguardando_compra";
@@ -1065,7 +1066,7 @@ function atualizarSituacaoDoPedido(pedido) {
 }
 
 function pedidosAbertos() {
-    return estado.pedidos.filter((pedido) => ["pendente", "aprovado", "em_producao", "aguardando_compra", "em_transito"].includes(pedido.situacao));
+    return estado.pedidos.filter((pedido) => ["pendente", "aprovado", "em_producao", "agendado_envio", "aguardando_compra", "em_transito"].includes(pedido.situacao));
 }
 
 function produtosComEstoqueBaixo() {
@@ -1112,6 +1113,7 @@ function textoSituacaoPedido(situacao) {
         pendente: "Pendente",
         aguardando_compra: "Aguardando compra",
         em_producao: "Em produção",
+        agendado_envio: "Envio agendado",
         em_transito: "A caminho",
         recebido: "Recebido",
         aprovado: "Aprovado",
@@ -1645,7 +1647,9 @@ function renderizarPedidos() {
             const acoes = haItensPendentes
                 ? `<button type="button" class="botao-acao acao-aprovar" data-acao="analisar-pedido" data-pedido-id="${pedido.id}">Analisar itens</button>`
                 : situacao === "em_producao"
-                    ? `<button type="button" class="botao-acao acao-aprovar" data-acao="enviar-pedido-produzido" data-pedido-id="${pedido.id}">Enviar pedido</button>`
+                    ? `<button type="button" class="botao-acao acao-aprovar" data-acao="agendar-envio-pedido" data-pedido-id="${pedido.id}">Agendar envio</button>`
+                    : situacao === "agendado_envio"
+                        ? `<button type="button" class="botao-acao acao-aprovar" data-acao="enviar-pedido-produzido" data-pedido-id="${pedido.id}">Confirmar envio</button>`
                 : `<button type="button" class="botao-acao" data-acao="consultar-pedido" data-pedido-id="${pedido.id}">Consultar pedido</button>`;
 
             return `
@@ -2001,6 +2005,7 @@ function renderizarPortalFilial() {
         ? pedidosFiltrados.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).map((pedido) => {
             const compra = pedido.compraPrevista ? formatarDataSimples(pedido.compraPrevista) : "";
             const producao = pedido.producaoPrevista ? formatarDataSimples(pedido.producaoPrevista) : "";
+            const envio = pedido.envioPrevisto ? formatarDataSimples(pedido.envioPrevisto) : "";
             const entrega = pedido.entregaPrevista ? formatarDataSimples(pedido.entregaPrevista) : "";
             return `
                 <article class="pedido-filial-card">
@@ -2026,6 +2031,7 @@ function renderizarPortalFilial() {
                     </div>
                     ${compra ? `<p><strong>Chegada prevista no CD:</strong> ${escaparHTML(compra)}</p>` : ""}
                     ${producao ? `<p><strong>Prazo de produção:</strong> ${escaparHTML(producao)}</p>` : ""}
+                    ${envio ? `<p><strong>Envio previsto:</strong> ${escaparHTML(envio)}</p>` : ""}
                     ${entrega ? `<p><strong>Entrega prevista:</strong> ${escaparHTML(entrega)}</p>` : ""}
                     ${pedido.recebidoEm ? `<p><strong>Recebido em:</strong> ${formatarData(pedido.recebidoEm)}</p>` : ""}
                     ${pedido.observacaoMatriz ? `<p><strong>Resposta do CD:</strong> ${escaparHTML(pedido.observacaoMatriz)}</p>` : ""}
@@ -2259,9 +2265,9 @@ function configurarModalDataPedido(pedido, modo) {
             botao: "Aprovar envio"
         },
         enviar_pedido: {
-            titulo: "Prazo de produção",
-            resumo: `Informe até quando o pedido de ${filial?.nome || "a filial"} ficará em produção. A filial verá este prazo antes do envio.`,
-            botao: "Iniciar produção"
+            titulo: "Agendar envio",
+            resumo: `Informe a data prevista para enviar o pedido à ${filial?.nome || "filial"}. A filial será informada, mas o estoque só será baixado na confirmação do envio.`,
+            botao: "Agendar envio"
         },
         compra: {
             titulo: "Previsão de chegada no CD",
@@ -2511,7 +2517,7 @@ function iniciarProducaoPedido(pedidoId, prazoProducao) {
 
 function enviarPedidoProduzido(pedidoId) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
-    const itens = pedido && itensDoPedido(pedido).filter((item) => situacaoDoItemPedido(item, pedido) === "em_producao");
+    const itens = pedido && itensDoPedido(pedido).filter((item) => situacaoDoItemPedido(item, pedido) === "agendado_envio");
     if (!pedido || !itens?.length) return;
     const indisponiveis = itens.filter((item) => !buscarProduto(item.produtoId) || buscarProduto(item.produtoId).quantidade < item.quantidadeEnviada);
     if (indisponiveis.length) { notificar("O estoque do CD não atende mais as quantidades aprovadas.", "erro"); return; }
@@ -2532,6 +2538,24 @@ function enviarPedidoProduzido(pedidoId) {
     salvarEstado();
     renderizarTudo();
     notificar("Pedido enviado para a filial.");
+}
+
+function agendarEnvioPedido(pedidoId, dataEnvio) {
+    const pedido = estado.pedidos.find((item) => item.id === pedidoId);
+    const itens = pedido && itensDoPedido(pedido).filter((item) => situacaoDoItemPedido(item, pedido) === "em_producao");
+    if (!pedido || !itens?.length) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEnvio) || Number.isNaN(new Date(`${dataEnvio}T12:00:00`).getTime())) {
+        elementos.mensagemEntrega.textContent = "Escolha uma data de envio válida.";
+        return;
+    }
+    itens.forEach((item) => { item.situacao = "agendado_envio"; });
+    atualizarSituacaoDoPedido(pedido);
+    pedido.envioPrevisto = dataEnvio;
+    pedido.observacaoMatriz = `Envio agendado pelo CD para ${formatarDataSimples(dataEnvio)}.`;
+    salvarEstado();
+    fecharModal(elementos.modalEntrega);
+    renderizarTudo();
+    notificar("Envio agendado e filial informada.");
 }
 
 function aprovarPedido(pedidoId, dataEntrega, quantidadeSelecionada = null) {
@@ -2710,6 +2734,7 @@ function abrirModalDetalhesPedido(pedidoId) {
                 recusado: "Não enviado: item recusado pelo CD.",
                 aguardando_compra: "Não enviado: aguardando compra pelo CD.",
                 em_producao: "Em produção no CD. Aguarde o envio após o prazo informado.",
+                agendado_envio: "Envio agendado pelo CD. Aguarde a confirmação de despacho.",
                 pendente: "Não enviado: aguardando análise do CD."
             }[situacao] || "Não enviado pelo CD.";
         return `
@@ -3135,6 +3160,9 @@ function lidarComAcao(acao, elemento) {
             break;
         case "enviar-pedido-produzido":
             enviarPedidoProduzido(elemento.dataset.pedidoId);
+            break;
+        case "agendar-envio-pedido":
+            configurarModalDataPedido(estado.pedidos.find((pedido) => pedido.id === elemento.dataset.pedidoId), "enviar_pedido");
             break;
         case "aprovar-item-pedido":
     itensSelecionadosPedido = [elemento.dataset.produtoId];
@@ -3573,7 +3601,7 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
     }
 
     if (elementos.entregaModo.value === "enviar_pedido") {
-        iniciarProducaoPedido(elementos.entregaPedidoId.value, dataSelecionada);
+        agendarEnvioPedido(elementos.entregaPedidoId.value, dataSelecionada);
         return;
     }
 
