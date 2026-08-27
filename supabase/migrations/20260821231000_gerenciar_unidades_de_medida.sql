@@ -28,6 +28,8 @@ grant select, insert, update, delete on public.unidades_medida to authenticated;
 revoke all on public.unidades_medida from anon;
 alter table public.unidades_medida enable row level security;
 
+drop policy if exists "usuarios autenticados leem unidades" on public.unidades_medida;
+drop policy if exists "cd administra unidades" on public.unidades_medida;
 create policy "usuarios autenticados leem unidades"
 on public.unidades_medida for select to authenticated using (true);
 

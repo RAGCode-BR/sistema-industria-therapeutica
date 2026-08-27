@@ -89,16 +89,10 @@ create policy "cd administra itens" on public.pedido_itens for all to authentica
 revoke execute on function public.substituir_estado_estoque(jsonb) from anon, authenticated;
 revoke execute on function public.criar_perfil_usuario() from public;
 revoke execute on function public.criar_perfil_usuario() from authenticated;
-revoke execute on function public.listar_usuarios() from public;
 revoke execute on function public.meu_papel() from public;
 revoke execute on function public.minha_filial_id() from public;
-revoke execute on function public.confirmar_recebimento_pedido(text) from public;
-revoke execute on function public.confirmar_recebimento_item_pedido(text, text) from public;
-grant execute on function public.listar_usuarios() to authenticated;
 grant execute on function public.meu_papel() to authenticated;
 grant execute on function public.minha_filial_id() to authenticated;
-grant execute on function public.confirmar_recebimento_pedido(text) to authenticated;
-grant execute on function public.confirmar_recebimento_item_pedido(text, text) to authenticated;
 
 alter table public.produtos replica identity full;
 alter table public.pedidos replica identity full;

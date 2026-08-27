@@ -22,11 +22,7 @@ const FILIAIS_PADRAO = [
     { id: "blumenau", nome: "Blumenau", cidade: "Blumenau, SC" },
     { id: "lucas", nome: "Lucas", cidade: "Lucas do Rio Verde, MT" },
     { id: "sinop", nome: "Sinop", cidade: "Sinop, MT" },
-    { id: "matriz", nome: "Sorriso - Indústria", cidade: "Sorriso, MT" },
-    { id: "sorriso-laboratorio", nome: "Sorriso - Laboratório", cidade: "Sorriso, MT" },
-    { id: "sorriso-callcenter", nome: "Sorriso - Callcenter", cidade: "Sorriso, MT" },
-    { id: "sorriso-atendimento", nome: "Sorriso - Atendimento", cidade: "Sorriso, MT" },
-    { id: "sorriso-rh", nome: "Sorriso - RH", cidade: "Sorriso, MT" }
+    { id: "matriz", nome: "Sorriso", cidade: "Sorriso, MT" }
 ];
 const CATEGORIAS_INICIAIS = [
     "Administrativo",
@@ -638,7 +634,7 @@ function exibirUsuarioLogado() {
 function normalizarFilial(filial) {
     const dados = filial && typeof filial === "object" ? filial : {};
     if (dados.id === "matriz") {
-        return { ...dados, nome: "Sorriso - Indústria", cidade: "Sorriso, MT" };
+        return { ...dados, nome: "Sorriso", cidade: "Sorriso, MT" };
     }
     return dados;
 }

@@ -131,14 +131,10 @@ create index if not exists pedidos_filial_id_idx on public.pedidos (filial_id);
 create index if not exists estoque_filiais_produto_id_idx on public.estoque_filiais (produto_id);
 
 insert into public.filiais (id, nome, cidade) values
-  ('matriz', 'Sorriso - Indústria', 'Sorriso, MT'),
+  ('matriz', 'Sorriso', 'Sorriso, MT'),
   ('blumenau', 'Blumenau', 'Blumenau, SC'),
   ('lucas', 'Lucas', 'Lucas do Rio Verde, MT'),
-  ('sinop', 'Sinop', 'Sinop, MT'),
-  ('sorriso-laboratorio', 'Sorriso - Laboratório', 'Sorriso, MT'),
-  ('sorriso-callcenter', 'Sorriso - Callcenter', 'Sorriso, MT'),
-  ('sorriso-atendimento', 'Sorriso - Atendimento', 'Sorriso, MT'),
-  ('sorriso-rh', 'Sorriso - RH', 'Sorriso, MT')
+  ('sinop', 'Sinop', 'Sinop, MT')
 on conflict (id) do update set nome = excluded.nome, cidade = excluded.cidade;
 
 -- O app envia um retrato completo do estado. Isto permite a migração sem

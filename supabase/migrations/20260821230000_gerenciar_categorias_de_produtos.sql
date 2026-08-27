@@ -29,6 +29,8 @@ grant select, insert, update, delete on public.categorias_produtos to authentica
 revoke all on public.categorias_produtos from anon;
 alter table public.categorias_produtos enable row level security;
 
+drop policy if exists "usuarios autenticados leem categorias" on public.categorias_produtos;
+drop policy if exists "cd administra categorias" on public.categorias_produtos;
 create policy "usuarios autenticados leem categorias"
 on public.categorias_produtos for select to authenticated using (true);
 
