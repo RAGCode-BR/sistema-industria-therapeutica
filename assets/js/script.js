@@ -1683,10 +1683,8 @@ function abrirModalAnalisarPedido(pedidoId) {
                 : "";
         return `<article class="item-analise-pedido"><div class="item-analise-informacoes"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span><span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span>${item.observacaoMatriz ? `<span>${escaparHTML(item.observacaoMatriz)}</span>` : ""}</div><div class="item-analise-acoes"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span>${acoes}</div></article>`;
     }, "grupo-itens-categoria-analise");
-    const todosAnalisados = itensDoPedido(pedido).every((item) => ["aprovado", "recusado"].includes(situacaoDoItemPedido(item, pedido)));
-    const pedidoJaEnviado = itensDoPedido(pedido).some((item) => ["em_transito", "recebido"].includes(item.situacao || pedido.situacao));
-    elementos.botaoEnviarPedidoAnalisado.disabled = !todosAnalisados;
-    elementos.botaoEnviarPedidoAnalisado.hidden = pedidoJaEnviado;
+    elementos.botaoEnviarPedidoAnalisado.disabled = true;
+    elementos.botaoEnviarPedidoAnalisado.hidden = true;
     elementos.botaoEnviarPedidoAnalisado.dataset.pedidoId = pedido.id;
     abrirModal(elementos.modalAnalisarPedido);
 }
@@ -2456,8 +2454,14 @@ function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
     salvarEstado();
     fecharModal(elementos.modalEntrega);
     renderizarTudo();
+    const todosAnalisados = itensDoPedido(pedido).every((registro) => ["aprovado", "recusado"].includes(situacaoDoItemPedido(registro, pedido)));
+    if (todosAnalisados) {
+        fecharModal(elementos.modalAnalisarPedido);
+        abrirModalEnviarPedido(pedido.id);
+        return;
+    }
     abrirModalAnalisarPedido(pedido.id);
-    notificar("Item aprovado. Envie o pedido quando todos os itens forem analisados.");
+    notificar("Item aprovado. Continue a análise dos demais itens.");
 }
 
 function abrirModalEnviarPedido(pedidoId) {
