@@ -464,6 +464,24 @@ main {
     border-color: var(--salmão-escuro);
 }
 
+#pagina-produtos .cabecalho-secao > .botao-principal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    gap: 8px;
+    min-height: 44px;
+    margin-top: 0;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+#pagina-produtos .cabecalho-secao > .botao-principal .icone {
+    width: 18px;
+    height: 18px;
+}
+
 .botao-secundario {
     color: var(--marrom-claro);
     background: var(--branco);
