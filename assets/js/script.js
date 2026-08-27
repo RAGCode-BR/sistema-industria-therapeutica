@@ -2259,6 +2259,11 @@ function configurarModalDataPedido(pedido, modo) {
     const filial = buscarFilial(pedido.filialId);
     const itens = itensEmAcao(pedido);
     const textos = {
+        iniciar_producao: {
+            titulo: "Prazo de produção",
+            resumo: `Informe até quando o pedido de ${filial?.nome || "a filial"} ficará em produção. A filial verá este prazo antes do agendamento do envio.`,
+            botao: "Iniciar produção"
+        },
         entrega: {
             titulo: "Data prevista de entrega",
             resumo: `Pedido para ${filial?.nome || "a filial"} com ${itens.length} item(ns). Escolha a previsão de entrega.`,
@@ -2474,7 +2479,7 @@ function abrirModalEnviarPedido(pedidoId) {
     }
 
     itensSelecionadosPedido = [];
-    configurarModalDataPedido(pedido, "enviar_pedido");
+    configurarModalDataPedido(pedido, "iniciar_producao");
 }
 
 function iniciarProducaoPedido(pedidoId, prazoProducao) {
@@ -3597,6 +3602,11 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
 
     if (elementos.entregaModo.value === "receber_compra") {
         receberCompraMatriz(elementos.entregaPedidoId.value, dataSelecionada);
+        return;
+    }
+
+    if (elementos.entregaModo.value === "iniciar_producao") {
+        iniciarProducaoPedido(elementos.entregaPedidoId.value, dataSelecionada);
         return;
     }
 
