@@ -25,11 +25,11 @@ jobs:
       - uses: actions/checkout@v6
       - name: Verificar credenciais do Supabase
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROJECT_REF" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
+          if [[ "$SUPABASE_ACCESS_TOKEN" == sbp_* ]] && [ -n "$SUPABASE_PROJECT_REF" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
             echo "SUPABASE_CONFIGURADA=true" >> "$GITHUB_ENV"
           else
             echo "SUPABASE_CONFIGURADA=false" >> "$GITHUB_ENV"
-            echo "::warning::Migrations não aplicadas automaticamente: configure os secrets SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF e SUPABASE_DB_PASSWORD."
+            echo "::warning::Migrations não aplicadas automaticamente: configure um SUPABASE_ACCESS_TOKEN atual (prefixo sbp_), além de SUPABASE_PROJECT_REF e SUPABASE_DB_PASSWORD."
           fi
       - uses: supabase/setup-cli@v1
         if: env.SUPABASE_CONFIGURADA == 'true'
