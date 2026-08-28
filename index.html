@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#e87861">
-    <title>Sistema de Compras - Therapeutica</title>
+    <title>Sistema de Estoque - Therapeutica</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -202,7 +202,7 @@
                             <span>Buscar produto</span>
                             <span class="campo-busca">
                                 <span class="icone icone-pesquisa" aria-hidden="true"></span>
-                                <input type="search" id="busca-produtos" placeholder="Nome ou categoria">
+                                <input type="search" id="busca-produtos" placeholder="Código, Nome ou Categoria">
                             </span>
                         </label>
                         <label>
@@ -242,6 +242,7 @@
                                 <tbody id="tabela-produtos"></tbody>
                             </table>
                         </div>
+                        <nav class="paginacao-produtos" id="paginacao-produtos" aria-label="Paginação dos produtos" hidden></nav>
                     </section>
                 </section>
 
@@ -343,7 +344,6 @@
                                 <option value="recusado">Recusado</option>
                                 <option value="aprovado">Aprovado</option>
                                 <option value="em_producao">Em produção</option>
-                                <option value="aguardando_compra">Aguardando compra</option>
                                 <option value="em_transito">A caminho</option>
                                 <option value="recebido">Recebido</option>
                             </select>
@@ -379,7 +379,7 @@
                         <label><span>De</span><input type="date" id="relatorio-data-inicial" disabled></label>
                         <label><span>Até</span><input type="date" id="relatorio-data-final" disabled></label>
                         <label><span>Filial</span><select id="relatorio-filial"><option value="">Todas as filiais</option></select></label>
-                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="aprovado">Aprovado</option><option value="em_producao">Em produção</option><option value="agendado_envio">Envio agendado</option><option value="aguardando_compra">Aguardando compra</option><option value="em_transito">A caminho</option><option value="recebido">Recebido</option></select></label>
+                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="aprovado">Aprovado</option><option value="em_producao">Em produção</option><option value="agendado_envio">Envio agendado</option><option value="em_transito">A caminho</option><option value="recebido">Recebido</option></select></label>
                         <label><span>Produto</span><select id="relatorio-produto"><option value="">Todos os produtos</option></select></label>
                         <label><span>Categoria</span><select id="relatorio-categoria"><option value="">Todas as categorias</option></select></label>
                         <button type="button" class="botao-secundario botao-limpar-relatorios" id="botao-limpar-relatorios"><span class="icone icone-limpar" aria-hidden="true"></span>Limpar filtros</button>
@@ -395,7 +395,7 @@
                     </section>
 
                     <section class="grade-kpis-relatorio grade-kpis-tempo" aria-label="Indicadores de tempo">
-                        <article class="cartao kpi-relatorio"><p>Tempo até o primeiro envio</p><strong id="relatorio-tempo-envio">—</strong><span>pedido criado até a primeira transferência</span></article>
+                        <article class="cartao kpi-relatorio"><p>Tempo até o primeiro envio</p><strong id="relatorio-tempo-envio">—</strong><span>pedido criado até a primeira remessa</span></article>
                         <article class="cartao kpi-relatorio"><p>Tempo médio de produção</p><strong id="relatorio-tempo-producao">—</strong><span>requer conclusão de produção registrada</span></article>
                         <article class="cartao kpi-relatorio"><p>Lead time médio</p><strong id="relatorio-lead-time">—</strong><span>pedido criado até recebimento completo</span></article>
                         <article class="cartao kpi-relatorio"><p>Entregas no prazo</p><strong id="relatorio-entregas-prazo">—</strong><span id="relatorio-entregas-prazo-detalhe">Dados insuficientes</span></article>
@@ -504,7 +504,6 @@
                             <select id="filtro-status-meus-pedidos">
                                 <option value="">Todos os status</option>
                                 <option value="recusado">Recusado</option>
-                                <option value="aguardando_compra">Aguardando compra</option>
                                 <option value="em_transito">A caminho</option>
                                 <option value="recebido">Recebido</option>
                             </select>
@@ -596,14 +595,9 @@
                         <article class="cartao-configuracao cartao-categorias">
                             <h3>Categorias de produtos</h3>
                             <p>Cadastre, edite ou exclua categorias disponíveis no cadastro de produtos.</p>
-                            <form id="formulario-categoria" class="formulario-categoria">
-                                <label for="categoria-nome">Nova categoria</label>
-                                <div class="linha-formulario-categoria">
-                                    <input type="text" id="categoria-nome" maxlength="80" placeholder="Exemplo: Equipamentos" required>
-                                    <button type="submit" class="botao-principal">Adicionar</button>
-                                </div>
-                                <p class="mensagem-formulario" id="mensagem-categoria" aria-live="polite"></p>
-                            </form>
+                            <div class="acoes-configuracao">
+                                <button type="button" class="botao-principal" data-acao="nova-categoria"><span class="icone icone-plus" aria-hidden="true"></span>Cadastrar categoria</button>
+                            </div>
                             <div class="tabela-responsiva tabela-categorias">
                                 <table>
                                     <thead><tr><th>Categoria</th><th>Produtos</th><th>Ações</th></tr></thead>
@@ -614,14 +608,9 @@
                         <article class="cartao-configuracao cartao-categorias">
                             <h3>Unidades de medida</h3>
                             <p>Cadastre, edite ou exclua unidades disponíveis no cadastro de produtos.</p>
-                            <form id="formulario-unidade" class="formulario-categoria">
-                                <label for="unidade-nome">Nova unidade</label>
-                                <div class="linha-formulario-categoria">
-                                    <input type="text" id="unidade-nome" maxlength="80" placeholder="Exemplo: Metro" required>
-                                    <button type="submit" class="botao-principal">Adicionar</button>
-                                </div>
-                                <p class="mensagem-formulario" id="mensagem-unidade" aria-live="polite"></p>
-                            </form>
+                            <div class="acoes-configuracao">
+                                <button type="button" class="botao-principal" data-acao="nova-unidade"><span class="icone icone-plus" aria-hidden="true"></span>Cadastrar unidade</button>
+                            </div>
                             <div class="tabela-responsiva tabela-categorias">
                                 <table>
                                     <thead><tr><th>Unidade</th><th>Produtos</th><th>Ações</th></tr></thead>
@@ -817,6 +806,71 @@
         </div>
     </div>
 
+    <div class="modal" id="modal-categoria" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-categoria">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Cadastros do estoque</p>
+                    <h2 id="titulo-modal-categoria">Cadastrar categoria</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-categoria" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-categoria" class="formulario-modal">
+                <label for="categoria-nome">Nome da categoria</label>
+                <input type="text" id="categoria-nome" maxlength="80" placeholder="Exemplo: Equipamentos" required>
+                <p class="mensagem-formulario" id="mensagem-categoria" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-categoria">Cancelar</button>
+                    <button type="submit" class="botao-principal" id="botao-salvar-categoria">Cadastrar categoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-unidade" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-unidade">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Cadastros do estoque</p>
+                    <h2 id="titulo-modal-unidade">Cadastrar unidade de medida</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-unidade" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-unidade" class="formulario-modal">
+                <label for="unidade-nome">Nome da unidade</label>
+                <input type="text" id="unidade-nome" maxlength="80" placeholder="Exemplo: Metro" required>
+                <p class="mensagem-formulario" id="mensagem-unidade" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-unidade">Cancelar</button>
+                    <button type="submit" class="botao-principal" id="botao-salvar-unidade">Cadastrar unidade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-remessa" aria-hidden="true">
+        <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-remessa">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Expedição do CD</p><h2 id="titulo-modal-remessa">Criar remessa</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-remessa" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-remessa" class="formulario-modal">
+                <input type="hidden" id="remessa-pedido-id">
+                <p class="texto-apoio" id="remessa-resumo">Informe as quantidades que sairão nesta remessa.</p>
+                <div id="lista-itens-remessa" class="itens-pedido-resumo"></div>
+                <div class="data-entrega-grid">
+                    <label for="remessa-envio-previsto"><span>Previsão de envio</span><input type="date" id="remessa-envio-previsto"></label>
+                    <label for="remessa-entrega-prevista"><span>Previsão de entrega</span><input type="date" id="remessa-entrega-prevista"></label>
+                </div>
+                <p class="mensagem-formulario" id="mensagem-remessa" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-remessa">Cancelar</button>
+                    <button type="submit" class="botao-principal">Expedir remessa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal" id="modal-usuario" aria-hidden="true">
         <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-usuario">
             <div class="modal-cabecalho">
@@ -918,6 +972,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
     <script src="./assets/js/env.js"></script>
     <script src="./assets/js/supabase-client.js"></script>
+    <script src="./assets/js/pedidos-utils.js"></script>
     <script src="./assets/js/relatorios-utils.js"></script>
     <script src="./assets/js/script.js"></script>
 </body>

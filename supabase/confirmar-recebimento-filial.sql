@@ -50,7 +50,9 @@ begin
   select case
     when every(situacao in ('recebido', 'recusado')) then 'recebido'
     when bool_or(situacao = 'em_transito') then 'em_transito'
-    when bool_or(situacao = 'aguardando_compra') then 'aguardando_compra'
+    when bool_or(situacao = 'agendado_envio') then 'agendado_envio'
+    when bool_or(situacao = 'em_producao') then 'em_producao'
+    when bool_or(situacao = 'aprovado') then 'aprovado'
     else 'pendente'
   end into v_situacao_pedido
   from public.pedido_itens

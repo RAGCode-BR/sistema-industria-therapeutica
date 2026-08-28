@@ -21,7 +21,7 @@ Protótipo de controle do Centro de Distribuição (CD) da Therapeutica, criado 
 - Portais de demonstração para Sorriso, Blumenau, Lucas e Sinop, além da visão do CD;
 - Estoque individual por filial;
 - Pedidos em lista: uma filial pode enviar vários produtos na mesma solicitação, com estoque atual obrigatório para cada item;
-- Aprovação, recusa ou espera de compra para pedidos;
+- Aprovação, produção interna, envio ou recusa para pedidos;
 - Transferência aprovada baixa o estoque do CD e atualiza a quantidade conhecida da filial;
 - Backup e restauração dos dados em arquivo JSON.
 

@@ -883,6 +883,8 @@ main {
     margin-top: 22px;
 }
 
+/* Ajustes transversais: o conteúdo não ultrapassa a tela em dispositivos
+   estreitos e os controles continuam confortáveis ao toque. */
 .grade-kpis-relatorio { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
 .grade-kpis-tempo { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
 .kpi-relatorio { min-height: 132px; padding: 18px; }
@@ -1354,8 +1356,25 @@ tbody tr:last-child td {
     background: var(--salmão-claro);
 }
 
-.status-sem-estoque,
-.tipo-aguardando_compra {
+.item-remessa {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.85rem;
+    border: 1px solid var(--borda);
+    border-radius: 0.75rem;
+    background: var(--salmão-claro);
+}
+
+.item-remessa span {
+    color: var(--marrom-claro);
+    font-size: 0.82rem;
+}
+
+.item-remessa input {
+    max-width: 11rem;
+}
+
+.status-sem-estoque {
     color: var(--vermelho);
     background: #ffe9e4;
 }
@@ -1549,6 +1568,72 @@ tbody tr:last-child td {
     margin: 16px 0;
 }
 
+.acoes-configuracao {
+    display: flex;
+    justify-content: flex-end;
+    margin: 18px 0 16px;
+}
+
+.acoes-configuracao .botao-principal {
+    min-height: 42px;
+    padding: 0 16px;
+    gap: 8px;
+    border-radius: 9px;
+    box-shadow: 0 7px 16px rgba(232, 120, 97, 0.2);
+}
+
+.acoes-configuracao .botao-principal:hover {
+    box-shadow: 0 9px 20px rgba(232, 120, 97, 0.28);
+    transform: translateY(-1px);
+}
+
+.acoes-configuracao .botao-principal .icone {
+    width: 16px;
+    height: 16px;
+}
+
+.modal-conteudo-pequeno {
+    max-width: 480px;
+}
+
+.modal-conteudo-pequeno .acoes-formulario {
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borda);
+}
+
+.modal-conteudo-pequeno .acoes-formulario .botao-principal,
+.modal-conteudo-pequeno .acoes-formulario .botao-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    margin-top: 0;
+    padding: 0 16px;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+.modal-conteudo-pequeno .acoes-formulario .botao-secundario {
+    color: var(--marrom-claro);
+    border-color: #efcfc7;
+}
+
+.modal-conteudo-pequeno .acoes-formulario .botao-secundario:hover {
+    color: var(--salmão-escuro);
+    background: var(--salmão-claro);
+    border-color: var(--salmão);
+}
+
+.modal-conteudo-pequeno .acoes-formulario .botao-principal {
+    box-shadow: 0 7px 16px rgba(232, 120, 97, 0.22);
+}
+
+.modal-conteudo-pequeno .acoes-formulario .botao-principal:hover {
+    box-shadow: 0 9px 20px rgba(232, 120, 97, 0.3);
+    transform: translateY(-1px);
+}
+
 .formulario-categoria label {
     display: block;
     margin-bottom: 7px;
@@ -1580,6 +1665,58 @@ tbody tr:last-child td {
 
 .tabela-categorias .acoes-tabela {
     justify-content: center;
+}
+
+.paginacao-produtos {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 2px 0;
+    color: var(--marrom-claro);
+    font-size: 13px;
+}
+
+.paginacao-produtos p {
+    margin: 0;
+}
+
+.paginacao-produtos > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.paginacao-produtos span {
+    min-width: 100px;
+    color: var(--marrom);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.paginacao-produtos .botao-secundario {
+    min-height: 36px;
+    margin-top: 0;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.paginacao-produtos .botao-secundario:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+@media (max-width: 560px) {
+    .paginacao-produtos {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .paginacao-produtos > div {
+        justify-content: space-between;
+    }
 }
 
 .apresentacao-filial {
@@ -2580,4 +2717,69 @@ small {
     }
     .acoes-formulario { flex-direction: column-reverse; gap: 10px; margin-top: 16px; }
     .carrinho-pedido .acoes-formulario { padding-top: 16px; }
+}
+
+/* Regras finais de responsividade compartilhadas por todas as páginas. */
+img,
+svg { max-width: 100%; }
+
+@media (max-width: 1100px) {
+    .cabecalho { padding-right: 24px; padding-left: 24px; }
+    main { padding: 24px 24px 42px; }
+    .acoes-cabecalho { gap: 9px; }
+    .usuario-logado { max-width: 150px; }
+}
+
+@media (max-width: 780px) {
+    html,
+    body { overflow-x: clip; }
+    .sistema,
+    .conteudo { width: 100%; }
+    main { padding: 20px 18px 34px; }
+    .cabecalho-secao > div,
+    .titulo-quadro > div,
+    .modal-cabecalho > div { min-width: 0; }
+    .titulo-quadro { align-items: flex-start; }
+    .titulo-quadro select { max-width: 48%; }
+    .tabela-responsiva { -webkit-overflow-scrolling: touch; }
+    .modal { padding: 12px; }
+    .modal-conteudo { max-height: calc(100dvh - 24px); }
+    .modal-estoque-filial-conteudo { width: 100%; }
+}
+
+@media (max-width: 520px) {
+    body { min-width: 0; }
+    main { padding: 16px 14px 28px; }
+    .cabecalho-mobile { min-height: 80px; padding: 9px 12px; }
+    .logo-mobile { width: 154px; height: 62px; }
+    .acoes-cabecalho-mobile { gap: 6px; }
+    .botao-cabecalho-mobile { width: 40px; height: 40px; }
+    .cabecalho-secao h2,
+    .titulo-quadro h2,
+    .cartao-configuracao h3,
+    .filial-card h3 { font-size: 18px; }
+    .cartao,
+    .quadro,
+    .filial-card,
+    .cartao-configuracao,
+    .cartao-informativo { padding: 16px; }
+    .filtros label,
+    .formulario-pagina label,
+    .formulario-modal label { min-width: 0; }
+    input,
+    select,
+    textarea { font-size: 16px; }
+    .acoes-configuracao { justify-content: stretch; }
+    .acoes-configuracao .botao-principal { width: 100%; }
+    .paginacao-produtos .botao-secundario { flex: 1; }
+    .paginacao-produtos span { min-width: 0; }
+}
+
+@media (max-width: 360px) {
+    .logo-mobile { width: 122px; opacity: 0.9; }
+    .cabecalho-mobile { grid-template-columns: 40px 1fr auto; }
+    .menu-lateral,
+    .menu-lateral.menu-reduzido { width: min(280px, calc(100vw - 34px)); flex-basis: min(280px, calc(100vw - 34px)); }
+    .item-analise-pedido,
+    .item-detalhes-pedido { padding: 12px; }
 }

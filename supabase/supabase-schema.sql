@@ -84,9 +84,7 @@ create table if not exists public.pedidos (
   filial_id text not null references public.filiais(id),
   observacao text not null default '',
   observacao_matriz text not null default '',
-  situacao text not null default 'pendente' check (situacao in ('pendente', 'aguardando_compra', 'em_transito', 'recebido', 'recusado')),
-  compra_prevista date,
-  compra_recebida_em timestamptz,
+  situacao text not null default 'pendente' check (situacao in ('pendente', 'aprovado', 'em_producao', 'agendado_envio', 'em_transito', 'recebido', 'recusado')),
   entrega_prevista date,
   recebido_em timestamptz,
   criado_em timestamptz not null default now(),
@@ -99,7 +97,7 @@ create table if not exists public.pedido_itens (
   estoque_informado integer not null check (estoque_informado >= 0),
   quantidade_solicitada integer not null check (quantidade_solicitada > 0),
   observacao text not null default '',
-  situacao text not null default 'pendente' check (situacao in ('pendente', 'aguardando_compra', 'em_transito', 'recebido', 'recusado')),
+  situacao text not null default 'pendente' check (situacao in ('pendente', 'aprovado', 'em_producao', 'agendado_envio', 'em_transito', 'recebido', 'recusado')),
   observacao_matriz text not null default '',
   primary key (pedido_id, produto_id)
 );
@@ -125,9 +123,38 @@ create table if not exists public.movimentacoes (
   criado_em timestamptz not null default now()
 );
 
+-- Um pedido mantém a solicitação original; cada remessa registra uma expedição.
+create table if not exists public.remessas (
+  id uuid primary key default gen_random_uuid(),
+  pedido_id text not null references public.pedidos(id) on delete restrict,
+  situacao text not null default 'em_transito' check (situacao in ('em_transito', 'recebida', 'cancelada')),
+  envio_previsto date,
+  entrega_prevista date,
+  enviada_em timestamptz not null default now(),
+  recebida_em timestamptz,
+  criada_por uuid references auth.users(id),
+  recebida_por uuid references auth.users(id),
+  criada_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+
+create table if not exists public.remessa_itens (
+  remessa_id uuid not null references public.remessas(id) on delete restrict,
+  pedido_id text not null,
+  produto_id text not null,
+  quantidade integer not null check (quantidade > 0),
+  recebido_em timestamptz,
+  primary key (remessa_id, produto_id),
+  foreign key (pedido_id, produto_id) references public.pedido_itens(pedido_id, produto_id) on delete restrict
+);
+
+alter table public.movimentacoes add column if not exists remessa_id uuid references public.remessas(id) on delete restrict;
+
 create index if not exists movimentacoes_criado_em_idx on public.movimentacoes (criado_em desc);
 create index if not exists movimentacoes_filial_id_idx on public.movimentacoes (filial_id);
 create index if not exists movimentacoes_pedido_id_idx on public.movimentacoes (pedido_id);
+create index if not exists remessas_pedido_id_idx on public.remessas (pedido_id, enviada_em);
+create index if not exists remessa_itens_pedido_produto_idx on public.remessa_itens (pedido_id, produto_id);
 create index if not exists pedidos_filial_id_idx on public.pedidos (filial_id);
 create index if not exists estoque_filiais_produto_id_idx on public.estoque_filiais (produto_id);
 
@@ -159,10 +186,9 @@ begin
     coalesce((x->>'atualizadoEm')::timestamptz, now()), nullif(x->>'arquivadoEm', '')::timestamptz
   from jsonb_array_elements(coalesce(p_estado->'produtos', '[]'::jsonb)) x;
 
-  insert into public.pedidos (id, filial_id, observacao, observacao_matriz, situacao, compra_prevista, compra_recebida_em, entrega_prevista, recebido_em, criado_em, analisado_em)
+  insert into public.pedidos (id, filial_id, observacao, observacao_matriz, situacao, entrega_prevista, recebido_em, criado_em, analisado_em)
   select x->>'id', x->>'filialId', coalesce(x->>'observacao', ''), coalesce(x->>'observacaoMatriz', ''),
-    coalesce(x->>'situacao', 'pendente'), nullif(x->>'compraPrevista', '')::date,
-    nullif(x->>'compraRecebidaEm', '')::timestamptz, nullif(x->>'entregaPrevista', '')::date,
+    coalesce(x->>'situacao', 'pendente'), nullif(x->>'entregaPrevista', '')::date,
     nullif(x->>'recebidoEm', '')::timestamptz, coalesce((x->>'criadoEm')::timestamptz, now()),
     nullif(x->>'analisadoEm', '')::timestamptz
   from jsonb_array_elements(coalesce(p_estado->'pedidos', '[]'::jsonb)) x;
@@ -196,6 +222,8 @@ alter table public.filiais enable row level security;
 alter table public.produtos enable row level security;
 alter table public.pedidos enable row level security;
 alter table public.pedido_itens enable row level security;
+alter table public.remessas enable row level security;
+alter table public.remessa_itens enable row level security;
 alter table public.estoque_filiais enable row level security;
 alter table public.movimentacoes enable row level security;
 
