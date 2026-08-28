@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "predev": "node scripts/gerar-config.js",
-    "dev": "serve . -l 3000"
+    "dev": "serve . -l 3000",
+    "test:reports": "node scripts/test-relatorios.js"
   },
   "devDependencies": {
     "serve": "^14.2.4"

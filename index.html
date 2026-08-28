@@ -28,7 +28,7 @@
                     <button class="item-menu" data-pagina="pedidos"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Pedidos das filiais</span><span class="notificacao-pedidos" id="notificacao-pedidos" hidden aria-label="Nenhum pedido pendente">0</span></button>
                     <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
                     <button class="item-menu" data-pagina="historico"><span class="icone icone-historico" aria-hidden="true"></span><span>Histórico</span></button>
-                    <button class="item-menu" data-pagina="relatorios"><span class="icone icone-historico" aria-hidden="true"></span><span>Relatórios</span></button>
+                    <button class="item-menu" data-pagina="relatorios"><span class="icone icone-relatorios" aria-hidden="true"></span><span>Relatórios</span></button>
                     <button class="item-menu" data-pagina="usuarios"><span class="icone icone-usuarios" aria-hidden="true"></span><span>Usuários</span></button>
                     <button class="item-menu" type="button" id="botao-configuracoes" aria-expanded="false"><span class="icone icone-config" aria-hidden="true"></span><span>Configurações</span></button>
                     <div class="submenu-configuracoes" id="submenu-configuracoes" hidden>
@@ -355,6 +355,7 @@
                                 <thead>
                                     <tr>
                                         <th>Data</th>
+                                        <th>N° do Pedido</th>
                                         <th>Filial</th>
                                         <th>Lista solicitada</th>
                                         <th>Situação</th>
@@ -368,15 +369,55 @@
                 </section>
 
                 <section class="pagina" id="pagina-relatorios">
-                    <div class="cabecalho-secao"><div><p class="subtitulo-secao">Gestão operacional</p><h2>Relatórios de pedidos</h2><p>Acompanhe envios, produção e os produtos com maior demanda.</p></div></div>
-                    <section class="indicadores indicadores-relatorio">
-                        <article class="cartao"><p>Unidades enviadas</p><strong id="relatorio-unidades-enviadas">0</strong><span>em transferências para filiais</span></article>
-                        <article class="cartao"><p>Tempo médio de produção</p><strong id="relatorio-tempo-producao">—</strong><span>do início ao envio</span></article>
-                        <article class="cartao"><p>Tempo médio até o envio</p><strong id="relatorio-tempo-envio">—</strong><span>da solicitação ao envio</span></article>
+                    <div class="cabecalho-secao relatorios-cabecalho">
+                        <div><p class="subtitulo-secao">Gestão operacional</p><h2>Relatórios de pedidos</h2><p>Acompanhe demanda, atendimento e pontos de atenção da distribuição.</p></div>
+                        <button type="button" class="botao-secundario" id="botao-exportar-relatorios"><span class="icone icone-exportar" aria-hidden="true"></span>Exportar CSV</button>
+                    </div>
+
+                    <section class="filtros filtros-relatorios" aria-label="Filtros dos relatórios">
+                        <label><span>Período</span><select id="relatorio-periodo"><option value="30">Últimos 30 dias</option><option value="hoje">Hoje</option><option value="7">Últimos 7 dias</option><option value="mes-atual">Mês atual</option><option value="mes-anterior">Mês anterior</option><option value="todos">Todo o período</option><option value="personalizado">Personalizado</option></select></label>
+                        <label><span>De</span><input type="date" id="relatorio-data-inicial" disabled></label>
+                        <label><span>Até</span><input type="date" id="relatorio-data-final" disabled></label>
+                        <label><span>Filial</span><select id="relatorio-filial"><option value="">Todas as filiais</option></select></label>
+                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="aprovado">Aprovado</option><option value="em_producao">Em produção</option><option value="agendado_envio">Envio agendado</option><option value="aguardando_compra">Aguardando compra</option><option value="em_transito">A caminho</option><option value="recebido">Recebido</option></select></label>
+                        <label><span>Produto</span><select id="relatorio-produto"><option value="">Todos os produtos</option></select></label>
+                        <label><span>Categoria</span><select id="relatorio-categoria"><option value="">Todas as categorias</option></select></label>
+                        <button type="button" class="botao-secundario botao-limpar-relatorios" id="botao-limpar-relatorios"><span class="icone icone-limpar" aria-hidden="true"></span>Limpar filtros</button>
                     </section>
+
+                    <section class="grade-kpis-relatorio" aria-label="Indicadores dos relatórios">
+                        <article class="cartao kpi-relatorio"><p>Pedidos realizados</p><strong id="relatorio-pedidos-realizados">—</strong><span id="relatorio-pedidos-comparacao">Sem dados no período anterior</span></article>
+                        <article class="cartao kpi-relatorio"><p>Unidades solicitadas</p><strong id="relatorio-unidades-solicitadas">—</strong><span id="relatorio-unidades-comparacao">—</span></article>
+                        <article class="cartao kpi-relatorio"><p>Taxa de atendimento</p><strong id="relatorio-taxa-atendimento">—</strong><span id="relatorio-atendimento-detalhe">—</span></article>
+                        <article class="cartao kpi-relatorio"><p>Envios parciais</p><strong id="relatorio-envios-parciais">—</strong><span id="relatorio-parciais-detalhe">—</span></article>
+                        <article class="cartao kpi-relatorio"><p>OTIF</p><strong id="relatorio-otif">—</strong><span id="relatorio-otif-detalhe">Dados insuficientes</span></article>
+                        <article class="cartao kpi-relatorio kpi-producao"><p>Produção necessária</p><strong id="relatorio-producao-necessaria">—</strong><span id="relatorio-producao-detalhe">para atender pedidos em aberto</span></article>
+                    </section>
+
+                    <section class="grade-kpis-relatorio grade-kpis-tempo" aria-label="Indicadores de tempo">
+                        <article class="cartao kpi-relatorio"><p>Tempo até o primeiro envio</p><strong id="relatorio-tempo-envio">—</strong><span>pedido criado até a primeira transferência</span></article>
+                        <article class="cartao kpi-relatorio"><p>Tempo médio de produção</p><strong id="relatorio-tempo-producao">—</strong><span>requer conclusão de produção registrada</span></article>
+                        <article class="cartao kpi-relatorio"><p>Lead time médio</p><strong id="relatorio-lead-time">—</strong><span>pedido criado até recebimento completo</span></article>
+                        <article class="cartao kpi-relatorio"><p>Entregas no prazo</p><strong id="relatorio-entregas-prazo">—</strong><span id="relatorio-entregas-prazo-detalhe">Dados insuficientes</span></article>
+                    </section>
+
+                    <section class="quadro relatorio-secao-tabela plano-producao"><div class="titulo-quadro"><div><h2>Plano de produção para pedidos em aberto</h2><p>Itens sem saldo suficiente no CD e as filiais que aguardam o envio.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Estoque no CD</th><th>Pendente para envio</th><th>A fabricar</th><th>Filiais solicitantes</th></tr></thead><tbody id="relatorio-plano-producao"></tbody></table></div></section>
+
+                    <section class="painel-duplo relatorio-graficos">
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Evolução dos pedidos</h2><p>Realizados, concluídos e parciais</p></div></div><div id="relatorio-evolucao" class="grafico-evolucao"></div></article>
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Status dos pedidos</h2><p>Clique em um status para filtrar</p></div></div><div id="relatorio-status-grafico" class="grafico-status"></div></article>
+                    </section>
+
                     <section class="painel-duplo relatorio-listas">
-                        <article class="quadro"><div class="titulo-quadro"><h2>Produtos mais solicitados</h2></div><div id="relatorio-produtos-solicitados" class="lista-resumo"></div></article>
-                        <article class="quadro"><div class="titulo-quadro"><h2>Envios por filial</h2></div><div id="relatorio-envios-filiais" class="lista-resumo"></div></article>
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Produtos mais solicitados</h2><p>Demanda consolidada por produto</p></div><select id="relatorio-limite-produtos" aria-label="Quantidade de produtos"><option value="5">Top 5</option><option value="10">Top 10</option></select></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Pedidos</th></tr></thead><tbody id="relatorio-produtos-solicitados"></tbody></table></div></article>
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Produtos com mais pendências</h2><p>Prioridade para produção e estoque</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Pedidos</th></tr></thead><tbody id="relatorio-produtos-pendentes"></tbody></table></div></article>
+                    </section>
+
+                    <section class="quadro relatorio-secao-tabela"><div class="titulo-quadro"><div><h2>Desempenho por filial</h2><p>Selecione uma filial para filtrar toda a análise.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Filial</th><th>Pedidos</th><th>Solicitado</th><th>Enviado</th><th>Atendimento</th><th>Parciais</th><th>Lead time</th><th>OTIF</th></tr></thead><tbody id="relatorio-desempenho-filiais"></tbody></table></div></section>
+
+                    <section class="painel-duplo relatorio-listas">
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Pedidos com envio parcial</h2><p>Quantidades consolidadas de todas as transferências.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Pedido</th><th>Filial</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Último envio</th><th>Status</th></tr></thead><tbody id="relatorio-pedidos-parciais"></tbody></table></div></article>
+                        <article class="quadro"><div class="titulo-quadro"><div><h2>Pedidos que requerem atenção</h2><p>Prazos, pendências e confirmações.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Pedido</th><th>Filial</th><th>Problema</th><th>Prazo</th><th>Aguardando</th><th>Status</th></tr></thead><tbody id="relatorio-pedidos-criticos"></tbody></table></div></article>
                     </section>
                 </section>
 
@@ -877,6 +918,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
     <script src="./assets/js/env.js"></script>
     <script src="./assets/js/supabase-client.js"></script>
+    <script src="./assets/js/relatorios-utils.js"></script>
     <script src="./assets/js/script.js"></script>
 </body>
 </html>

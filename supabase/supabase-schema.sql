@@ -80,6 +80,7 @@ alter table public.produtos add constraint produtos_unidade_fkey
 
 create table if not exists public.pedidos (
   id text primary key,
+  numero_pedido bigint unique,
   filial_id text not null references public.filiais(id),
   observacao text not null default '',
   observacao_matriz text not null default '',
