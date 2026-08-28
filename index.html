@@ -337,15 +337,28 @@
                         <p class="aviso-fluxo">Pedidos são criados pelos portais das filiais e podem conter vários itens.</p>
                     </div>
                     <div class="filtros filtros-status-pedidos">
-                        <label for="filtro-status-pedidos">Filtrar por status
+                        <label for="filtro-status-pedidos">Filtrar pedidos por status
                             <select id="filtro-status-pedidos">
                                 <option value="">Todos os status</option>
-                                <option value="com_item_pendente">Pendente</option>
-                                <option value="recusado">Recusado</option>
-                                <option value="aprovado">Aprovado</option>
+                                <option value="com_item_pendente">Aguardando análise</option>
+                                <option value="aprovado">Aprovado · aguardando expedição</option>
                                 <option value="em_producao">Em produção</option>
-                                <option value="em_transito">A caminho</option>
+                                <option value="envio_parcial">Envio parcial</option>
+                                <option value="em_transito">Em trânsito · aguardando recebimento</option>
+                                <option value="finalizado">Finalizado</option>
+                                <option value="recusado">Recusado</option>
+                            </select>
+                        </label>
+                        <label for="filtro-status-itens-pedidos">Filtrar itens por status
+                            <select id="filtro-status-itens-pedidos">
+                                <option value="">Todos os status dos itens</option>
+                                <option value="pendente">Aguardando análise</option>
+                                <option value="aprovado">Aprovado · aguardando expedição</option>
+                                <option value="em_producao">Em produção</option>
+                                <option value="envio_parcial">Envio parcial</option>
+                                <option value="em_transito">Em trânsito · aguardando recebimento</option>
                                 <option value="recebido">Recebido</option>
+                                <option value="recusado">Recusado</option>
                             </select>
                         </label>
                     </div>
@@ -379,7 +392,7 @@
                         <label><span>De</span><input type="date" id="relatorio-data-inicial" disabled></label>
                         <label><span>Até</span><input type="date" id="relatorio-data-final" disabled></label>
                         <label><span>Filial</span><select id="relatorio-filial"><option value="">Todas as filiais</option></select></label>
-                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="aprovado">Aprovado</option><option value="em_producao">Em produção</option><option value="agendado_envio">Envio agendado</option><option value="em_transito">A caminho</option><option value="recebido">Recebido</option></select></label>
+                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Aguardando análise</option><option value="aprovado">Aprovado · aguardando expedição</option><option value="em_producao">Em produção</option><option value="envio_parcial">Envio parcial</option><option value="em_transito">Em trânsito · aguardando recebimento</option><option value="finalizado">Finalizado</option><option value="recusado">Recusado</option></select></label>
                         <label><span>Produto</span><select id="relatorio-produto"><option value="">Todos os produtos</option></select></label>
                         <label><span>Categoria</span><select id="relatorio-categoria"><option value="">Todas as categorias</option></select></label>
                         <button type="button" class="botao-secundario botao-limpar-relatorios" id="botao-limpar-relatorios"><span class="icone icone-limpar" aria-hidden="true"></span>Limpar filtros</button>
@@ -503,9 +516,13 @@
                         <label for="filtro-status-meus-pedidos">Filtrar por status
                             <select id="filtro-status-meus-pedidos">
                                 <option value="">Todos os status</option>
+                                <option value="pendente">Aguardando análise</option>
+                                <option value="aprovado">Aprovado · aguardando expedição</option>
+                                <option value="em_producao">Em produção</option>
+                                <option value="envio_parcial">Envio parcial</option>
+                                <option value="em_transito">Em trânsito · aguardando recebimento</option>
+                                <option value="finalizado">Finalizado</option>
                                 <option value="recusado">Recusado</option>
-                                <option value="em_transito">A caminho</option>
-                                <option value="recebido">Recebido</option>
                             </select>
                         </label>
                     </div>
@@ -759,6 +776,7 @@
             </div>
             <form id="formulario-entrega" class="formulario-modal">
                 <input type="hidden" id="entrega-pedido-id">
+                <input type="hidden" id="entrega-produto-id">
                 <input type="hidden" id="entrega-modo">
                 <p class="texto-apoio" id="entrega-resumo">Selecione quando a filial deve receber este pedido.</p>
 
@@ -801,8 +819,32 @@
             <p class="texto-apoio">Escolha a ação individual de cada produto. Itens já analisados permanecem visíveis para acompanhamento.</p>
             <div id="lista-analisar-pedido" class="itens-pedido-resumo"></div>
             <div class="acoes-formulario">
-                <button type="button" class="botao-principal" id="botao-enviar-pedido-analisado" disabled>Enviar pedido</button>
+                <button type="button" class="botao-principal" id="botao-enviar-pedido-analisado" disabled><span class="icone icone-saida" aria-hidden="true"></span>Enviar pedido</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-recusar-item" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-recusar-item">
+            <div class="modal-cabecalho">
+                <div>
+                    <p class="subtitulo-modal">Análise por item</p>
+                    <h2 id="titulo-modal-recusar-item">Recusar item</h2>
+                </div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-recusar-item" aria-label="Fechar">×</button>
+            </div>
+            <form id="formulario-recusar-item" class="formulario-modal">
+                <input type="hidden" id="recusa-pedido-id">
+                <input type="hidden" id="recusa-produto-id">
+                <p class="texto-apoio" id="resumo-recusar-item"></p>
+                <label for="motivo-recusar-item">Motivo da recusa</label>
+                <textarea id="motivo-recusar-item" rows="4" maxlength="500" placeholder="Descreva o motivo para a filial." required></textarea>
+                <p class="mensagem-formulario" id="mensagem-recusar-item" aria-live="polite"></p>
+                <div class="acoes-formulario">
+                    <button type="button" class="botao-secundario" data-fechar-modal="modal-recusar-item">Cancelar</button>
+                    <button type="submit" class="botao-principal">Confirmar recusa</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -859,13 +901,13 @@
                 <p class="texto-apoio" id="remessa-resumo">Informe as quantidades que sairão nesta remessa.</p>
                 <div id="lista-itens-remessa" class="itens-pedido-resumo"></div>
                 <div class="data-entrega-grid">
-                    <label for="remessa-envio-previsto"><span>Previsão de envio</span><input type="date" id="remessa-envio-previsto"></label>
+                    <label for="remessa-envio-previsto"><span>Previsão de expedição</span><input type="date" id="remessa-envio-previsto"></label>
                     <label for="remessa-entrega-prevista"><span>Previsão de entrega</span><input type="date" id="remessa-entrega-prevista"></label>
                 </div>
                 <p class="mensagem-formulario" id="mensagem-remessa" aria-live="polite"></p>
                 <div class="acoes-formulario">
                     <button type="button" class="botao-secundario" data-fechar-modal="modal-remessa">Cancelar</button>
-                    <button type="submit" class="botao-principal">Expedir remessa</button>
+                    <button type="submit" class="botao-principal"><span class="icone icone-saida" aria-hidden="true"></span>Expedir remessa</button>
                 </div>
             </form>
         </div>

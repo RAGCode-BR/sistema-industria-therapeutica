@@ -93,6 +93,7 @@ const elementos = {
     tabelaEstoqueBaixo: document.querySelector("#tabela-estoque-baixo"),
     tabelaPedidos: document.querySelector("#tabela-pedidos"),
     filtroStatusPedidos: document.querySelector("#filtro-status-pedidos"),
+    filtroStatusItensPedidos: document.querySelector("#filtro-status-itens-pedidos"),
     notificacaoPedidos: document.querySelector("#notificacao-pedidos"),
     listaFiliais: document.querySelector("#lista-filiais"),
     buscaHistorico: document.querySelector("#busca-historico"),
@@ -179,6 +180,7 @@ const elementos = {
     formularioEntrega: document.querySelector("#formulario-entrega"),
     tituloModalEntrega: document.querySelector("#titulo-modal-entrega"),
     entregaPedidoId: document.querySelector("#entrega-pedido-id"),
+    entregaProdutoId: document.querySelector("#entrega-produto-id"),
     entregaModo: document.querySelector("#entrega-modo"),
     entregaResumo: document.querySelector("#entrega-resumo"),
     campoEntregaQuantidade: document.querySelector("#campo-entrega-quantidade"),
@@ -194,6 +196,14 @@ const elementos = {
     tituloModalAnalisarPedido: document.querySelector("#titulo-modal-analisar-pedido"),
     listaAnalisarPedido: document.querySelector("#lista-analisar-pedido"),
     botaoEnviarPedidoAnalisado: document.querySelector("#botao-enviar-pedido-analisado"),
+    modalRecusarItem: document.querySelector("#modal-recusar-item"),
+    formularioRecusarItem: document.querySelector("#formulario-recusar-item"),
+    tituloModalRecusarItem: document.querySelector("#titulo-modal-recusar-item"),
+    resumoRecusarItem: document.querySelector("#resumo-recusar-item"),
+    recusaPedidoId: document.querySelector("#recusa-pedido-id"),
+    recusaProdutoId: document.querySelector("#recusa-produto-id"),
+    motivoRecusarItem: document.querySelector("#motivo-recusar-item"),
+    mensagemRecusarItem: document.querySelector("#mensagem-recusar-item"),
     modalRemessa: document.querySelector("#modal-remessa"),
     formularioRemessa: document.querySelector("#formulario-remessa"),
     tituloModalRemessa: document.querySelector("#titulo-modal-remessa"),
@@ -325,7 +335,7 @@ let paginaAtual = "dashboard";
 let tipoMovimentacaoAtual = "entrada";
 const PRODUTOS_POR_PAGINA = 15;
 let paginaProdutosAtual = 1;
-let ordenacaoProdutos = "quantidade";
+let ordenacaoProdutos = "nome";
 let ordenacaoQuantidade = "crescente";
 let produtoSelecionadoMovimentacao = "";
 let itensXmlMovimentacao = [];
@@ -404,6 +414,7 @@ function estadoPadrao() {
         produtos: [],
         movimentacoes: [],
         remessas: [],
+        reservasProducao: [],
         eventosPedido: [],
         pedidos: [],
         filiais: FILIAIS_PADRAO.map((filial) => ({ ...filial })),
@@ -650,7 +661,7 @@ function normalizarMovimentacao(movimentacao) {
 }
 
 function normalizarPedido(pedido) {
-    const situacoesValidas = ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito", "recebido", "recusado"];
+    const situacoesValidas = ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito", "recebido", "finalizado", "recusado"];
     const statusRecebido = pedido?.situacao ?? pedido?.status;
     const situacao = situacoesValidas.includes(statusRecebido)
         ? statusRecebido
@@ -666,6 +677,7 @@ function normalizarPedido(pedido) {
             quantidadeSolicitada: numeroInteiroNaoNegativo(item?.quantidadeSolicitada ?? item?.requestedQuantity ?? pedido?.quantidadeSolicitada ?? pedido?.requestedQuantity),
             observacao: String(item?.observacao ?? item?.note ?? ""),
             situacao: situacoesValidas.includes(item?.situacao) ? item.situacao : situacao,
+            producaoPrevista: item?.producaoPrevista ?? item?.producao_prevista ?? "",
             observacaoMatriz: String(item?.observacaoMatriz ?? "")
         }))
         .filter((item) => item.produtoId || item.produtoNome !== "Produto não identificado");
@@ -699,6 +711,15 @@ function normalizarRemessa(remessa) {
             quantidade: numeroInteiroNaoNegativo(item?.quantidade),
             recebidoEm: item?.recebidoEm ?? item?.recebido_em ?? null
         }))
+    };
+}
+
+function normalizarReservaProducao(reserva) {
+    return {
+        pedidoId: String(reserva?.pedidoId ?? reserva?.pedido_id ?? ""),
+        produtoId: String(reserva?.produtoId ?? reserva?.produto_id ?? ""),
+        quantidade: numeroInteiroNaoNegativo(reserva?.quantidade),
+        criadaEm: reserva?.criadaEm ?? reserva?.criada_em ?? null
     };
 }
 
@@ -739,6 +760,7 @@ function normalizarEstado(dados) {
     const produtos = Array.isArray(fonte.produtos) ? fonte.produtos : [];
     const movimentacoes = Array.isArray(fonte.movimentacoes) ? fonte.movimentacoes : [];
     const remessas = Array.isArray(fonte.remessas) ? fonte.remessas : [];
+    const reservasProducao = Array.isArray(fonte.reservasProducao) ? fonte.reservasProducao : [];
     const eventosPedido = Array.isArray(fonte.eventosPedido) ? fonte.eventosPedido : [];
     const pedidos = Array.isArray(fonte.pedidos) ? fonte.pedidos : [];
     const filiaisRecebidas = Array.isArray(fonte.filiais) ? fonte.filiais : [];
@@ -747,6 +769,7 @@ function normalizarEstado(dados) {
     base.produtos = produtos.map(normalizarProduto).filter((produto) => produto.nome);
     base.movimentacoes = movimentacoes.map(normalizarMovimentacao);
     base.remessas = remessas.map(normalizarRemessa).filter((remessa) => remessa.id && remessa.pedidoId);
+    base.reservasProducao = reservasProducao.map(normalizarReservaProducao).filter((reserva) => reserva.pedidoId && reserva.produtoId && reserva.quantidade > 0);
     base.eventosPedido = eventosPedido;
     base.pedidos = pedidos.map(normalizarPedido);
     base.filiais = FILIAIS_PADRAO.map((filial) => normalizarFilial({ ...filial, ...filiaisPorId.get(filial.id) }));
@@ -875,7 +898,7 @@ function pedidoParaBanco(pedido) {
 }
 
 function situacaoParaBanco(situacao) {
-    return situacao === "aprovado" ? "pendente" : situacao;
+    return situacao;
 }
 
 function itensParaBanco(pedidos) {
@@ -953,7 +976,7 @@ async function carregarDadosSupabase() {
         notificar("Não foi possível carregar o Supabase. Verifique sua conexão e atualize a página.", "erro");
         return;
     }
-    const [produtos, filiais, pedidos, estoques, movimentacoes, remessas, eventosPedido, categorias, unidades] = await Promise.all([
+    const [produtos, filiais, pedidos, estoques, movimentacoes, remessas, eventosPedido, categorias, unidades, reservasProducao] = await Promise.all([
         clienteSupabase.from("produtos").select("*").order("nome"),
         clienteSupabase.from("filiais").select("*").order("nome"),
         clienteSupabase.from("pedidos").select("*, itens:pedido_itens(*)").order("criado_em", { ascending: false }),
@@ -962,9 +985,10 @@ async function carregarDadosSupabase() {
         clienteSupabase.from("remessas").select("*, itens:remessa_itens(*)").order("enviada_em", { ascending: false }),
         clienteSupabase.from("pedido_eventos").select("*").order("criado_em", { ascending: false }),
         clienteSupabase.from("categorias_produtos").select("nome").order("nome"),
-        clienteSupabase.from("unidades_medida").select("nome").order("nome")
+        clienteSupabase.from("unidades_medida").select("nome").order("nome"),
+        clienteSupabase.from("reservas_producao").select("*").order("criada_em")
     ]);
-    const erro = [produtos, filiais, pedidos, estoques, movimentacoes, remessas, eventosPedido, categorias, unidades].find((resultado) => resultado.error)?.error;
+    const erro = [produtos, filiais, pedidos, estoques, movimentacoes, remessas, eventosPedido, categorias, unidades, reservasProducao].find((resultado) => resultado.error)?.error;
     if (erro) {
         console.error(erro);
         notificar("Erro ao carregar os dados do Supabase. Execute o arquivo supabase-schema.sql no SQL Editor.", "erro");
@@ -987,7 +1011,7 @@ async function carregarDadosSupabase() {
             id: pedido.id, numeroPedido: pedido.numero_pedido, filialId: pedido.filial_id,
             itens: pedido.itens.map((item) => {
                 const produto = produtosPorId.get(item.produto_id);
-                return { produtoId: item.produto_id, produtoNome: produto?.nome || "Produto nao identificado", unidade: produto?.unidade || "Unidade", estoqueInformado: item.estoque_informado, quantidadeSolicitada: item.quantidade_solicitada, quantidadeEnviada: item.quantidade_enviada || null, observacao: item.observacao, situacao: item.situacao || pedido.situacao, observacaoMatriz: item.observacao_matriz || "", recebidoEm: item.recebido_em || null };
+                return { produtoId: item.produto_id, produtoNome: produto?.nome || "Produto nao identificado", unidade: produto?.unidade || "Unidade", estoqueInformado: item.estoque_informado, quantidadeSolicitada: item.quantidade_solicitada, quantidadeEnviada: item.quantidade_enviada || null, observacao: item.observacao, situacao: item.situacao || pedido.situacao, producaoPrevista: item.producao_prevista || "", observacaoMatriz: item.observacao_matriz || "", recebidoEm: item.recebido_em || null };
             }),
             observacao: pedido.observacao, observacaoMatriz: pedido.observacao_matriz, situacao: pedido.situacao,
             producaoPrevista: pedido.producao_prevista || "", producaoIniciadaEm: pedido.producao_iniciada_em || null, envioPrevisto: pedido.envio_previsto || "", enviadoEm: pedido.enviado_em || null,
@@ -1000,6 +1024,7 @@ async function carregarDadosSupabase() {
             return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", criadoEm: movimentacao.criado_em };
         }),
         remessas: remessas.data.map(normalizarRemessa),
+        reservasProducao: reservasProducao.data.map(normalizarReservaProducao),
         eventosPedido: eventosPedido.data.map((evento) => ({ id: evento.id, pedidoId: evento.pedido_id, remessaId: evento.remessa_id, tipo: evento.tipo, dados: evento.dados || {}, criadoEm: evento.criado_em }))
     };
     idsPedidosRemotos = new Set(estado.pedidos.map((pedido) => pedido.id));
@@ -1083,6 +1108,14 @@ function filialAtual() {
     return estaNoPortalFilial() ? buscarFilial(portalAtual) : null;
 }
 
+function usuarioEhFilialDestinataria(pedido) {
+    return perfilAtual?.papel === "filial" && perfilAtual.filial_id === pedido?.filialId;
+}
+
+function podeConfirmarRecebimento(pedido) {
+    return usuarioEhCD() || usuarioEhFilialDestinataria(pedido);
+}
+
 function itensDoPedido(pedido) {
     return Array.isArray(pedido.itens) ? pedido.itens : [];
 }
@@ -1127,10 +1160,10 @@ function situacaoDoItemPedido(item, pedido) {
 function situacaoDoPedido(pedido) {
     const situacoes = itensDoPedido(pedido).map((item) => situacaoDoItemPedido(item, pedido));
     if (situacoes.every((situacao) => situacao === "recusado")) return "recusado";
+    if (situacoes.length && situacoes.every((situacao) => situacao === "recebido" || situacao === "recusado")) return "finalizado";
     if (window.PedidosUtils && Array.isArray(estado?.remessas)) {
         return window.PedidosUtils.statusOperacionalPedido(pedido, estado.remessas);
     }
-    if (situacoes.every((situacao) => situacao === "recebido" || situacao === "recusado")) return "recebido";
     if (situacoes.includes("em_transito")) return "em_transito";
     if (situacoes.includes("agendado_envio")) return "agendado_envio";
     if (situacoes.includes("em_producao")) return "em_producao";
@@ -1141,6 +1174,32 @@ function situacaoDoPedido(pedido) {
 function atualizarSituacaoDoPedido(pedido) {
     pedido.situacao = situacaoDoPedido(pedido);
     pedido.atualizadoEm = new Date().toISOString();
+}
+
+function itemTemEnvioParcial(pedido, item) {
+    const atendimentoItem = window.PedidosUtils?.calcularAtendimentoPedido(pedido, estado.remessas).itens
+        .find((registro) => registro.produtoId === item.produtoId);
+    return situacaoDoItemPedido(item, pedido) !== "recusado"
+        && (atendimentoItem?.enviado || 0) > 0
+        && (atendimentoItem?.pendente || 0) > 0;
+}
+
+function pedidoCorrespondeStatus(pedido, status) {
+    if (!status) return true;
+    if (status === "com_item_pendente") {
+        return itensDoPedido(pedido).some((item) => situacaoDoItemPedido(item, pedido) === "pendente");
+    }
+    if (status === "envio_parcial") {
+        return itensDoPedido(pedido).some((item) => itemTemEnvioParcial(pedido, item));
+    }
+    return situacaoDoPedido(pedido) === status;
+}
+
+function itemCorrespondeStatus(pedido, item, status) {
+    if (!status) return true;
+    return status === "envio_parcial"
+        ? itemTemEnvioParcial(pedido, item)
+        : situacaoDoItemPedido(item, pedido) === status;
 }
 
 function pedidosAbertos() {
@@ -1193,6 +1252,7 @@ function textoSituacaoPedido(situacao) {
         agendado_envio: "Envio agendado",
         em_transito: "A caminho",
         recebido: "Recebido",
+        finalizado: "Finalizado",
         aprovado: "Aprovado",
         recusado: "Recusado"
     }[situacao] || "Pendente";
@@ -1670,6 +1730,21 @@ function renderizarProdutos() {
     ` : "";
 }
 
+function quantidadeDisponivelParaPedido(pedido, produtoId) {
+    const produto = buscarProduto(produtoId);
+    const estoqueFisico = numeroInteiroNaoNegativo(produto?.quantidade);
+    const inicioAtual = pedido?.producaoIniciadaEm ? new Date(pedido.producaoIniciadaEm).getTime() : Number.POSITIVE_INFINITY;
+    const reservasAnteriores = (Array.isArray(estado.reservasProducao) ? estado.reservasProducao : [])
+        .filter((reserva) => reserva.produtoId === String(produtoId) && reserva.pedidoId !== pedido?.id)
+        .filter((reserva) => {
+            const outroPedido = estado.pedidos.find((registro) => registro.id === reserva.pedidoId);
+            const inicioOutro = outroPedido?.producaoIniciadaEm ? new Date(outroPedido.producaoIniciadaEm).getTime() : Number.POSITIVE_INFINITY;
+            return inicioOutro < inicioAtual || (inicioOutro === inicioAtual && String(reserva.pedidoId).localeCompare(String(pedido?.id || "")) < 0);
+        })
+        .reduce((total, reserva) => total + reserva.quantidade, 0);
+    return Math.max(0, estoqueFisico - reservasAnteriores);
+}
+
 function renderizarFormularioMovimentacao() {
     const ativos = produtosAtivos().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     const valorExistente = produtoSelecionadoMovimentacao || elementos.movimentoProduto.value;
@@ -1731,33 +1806,50 @@ function renderizarEstoqueBaixo() {
 
 function renderizarPedidos() {
     const statusSelecionado = elementos.filtroStatusPedidos.value;
+    const statusItemSelecionado = elementos.filtroStatusItensPedidos.value;
     const pedidos = [...estado.pedidos]
-        .filter((pedido) => !statusSelecionado
-            || (statusSelecionado === "com_item_pendente"
-                ? itensDoPedido(pedido).some((item) => situacaoDoItemPedido(item, pedido) === "pendente")
-                : situacaoDoPedido(pedido) === statusSelecionado))
+        .filter((pedido) => pedidoCorrespondeStatus(pedido, statusSelecionado))
+        .filter((pedido) => !statusItemSelecionado
+            || itensDoPedido(pedido).some((item) => itemCorrespondeStatus(pedido, item, statusItemSelecionado)))
         .sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
 
     elementos.tabelaPedidos.innerHTML = pedidos.length
         ? pedidos.map((pedido) => {
             const filial = buscarFilial(pedido.filialId);
             const itens = itensDoPedido(pedido);
+            const itensVisiveis = statusItemSelecionado
+                ? itens.filter((item) => itemCorrespondeStatus(pedido, item, statusItemSelecionado))
+                : itens;
             const situacao = situacaoDoPedido(pedido);
             const atendimento = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas);
+            const pendenteParaEnvio = atendimento.itens
+                .filter((item) => situacaoDoItemPedido(item, pedido) !== "recusado")
+                .reduce((total, item) => total + item.pendente, 0);
+            const envioParcial = atendimento.itens.some((item) => situacaoDoItemPedido(item, pedido) !== "recusado" && item.enviado > 0 && item.pendente > 0);
             const producao = pedido.producaoPrevista ? `Prazo de produção: ${formatarDataSimples(pedido.producaoPrevista)}` : "";
             const entrega = pedido.entregaPrevista ? `Entrega prevista: ${formatarDataSimples(pedido.entregaPrevista)}` : "";
-            const listaItens = renderizarItensAgrupadosPorCategoria(itens, (item) => `
+            const listaItens = renderizarItensAgrupadosPorCategoria(itensVisiveis, (item) => `
                 <div class="item-pedido-resumo">
-                    <strong>${escaparHTML(item.produtoNome)}</strong>
+                    <div class="informacoes-item-resumo"><strong>${escaparHTML(item.produtoNome)}</strong>
                     <span>Filial: ${formatarNumero(item.estoqueInformado)} · Pedido: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span>
+                    </div>
+                    <span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoDoItemPedido(item, pedido))}">${textoSituacaoPedido(situacaoDoItemPedido(item, pedido))}</span>
                 </div>
             `, "grupo-itens-categoria-resumo");
             const haItensPendentes = itens.some((item) => (item.situacao || pedido.situacao) === "pendente");
-            const acoes = haItensPendentes
+            const itensPendentesDeEnvio = atendimento.itens.filter((item) => item.pendente > 0 && situacaoDoItemPedido(item, pedido) !== "recusado");
+            const existeSaldoParaExpedir = itensPendentesDeEnvio.some((item) => quantidadeDisponivelParaPedido(pedido, item.produtoId) > 0);
+            const existeItemSemSaldo = itensPendentesDeEnvio.some((item) => quantidadeDisponivelParaPedido(pedido, item.produtoId) === 0);
+            const remessasRecebidas = atendimento.remessas.filter((remessa) => remessa.situacao === "recebida").length;
+            const remessasEmTransito = atendimento.remessas.filter((remessa) => remessa.situacao === "em_transito").length;
+            const acaoPrincipal = haItensPendentes
                 ? `<button type="button" class="botao-acao acao-aprovar" data-acao="analisar-pedido" data-pedido-id="${pedido.id}">Analisar itens</button>`
                 : atendimento.pendente > 0
-                    ? `<button type="button" class="botao-acao acao-aprovar" data-acao="criar-remessa" data-pedido-id="${pedido.id}">Criar remessa</button>`
-                    : `<button type="button" class="botao-acao" data-acao="consultar-pedido" data-pedido-id="${pedido.id}">Consultar pedido</button>`;
+                    ? existeSaldoParaExpedir
+                        ? `<button type="button" class="botao-acao acao-aprovar" data-acao="criar-remessa" data-pedido-id="${pedido.id}">${existeItemSemSaldo ? "Criar remessa parcial" : "Criar remessa"}</button>`
+                        : ""
+                    : "";
+            const acoes = `<div class="acoes-tabela acoes-pedido-cd">${acaoPrincipal}<button type="button" class="botao-acao" data-acao="consultar-pedido" data-pedido-id="${pedido.id}">Ver detalhes</button></div>`;
 
             return `
                 <tr>
@@ -1765,7 +1857,7 @@ function renderizarPedidos() {
                     <td data-label="N° do Pedido"><span class="codigo-pedido">${numeroPedidoParaExibicao(pedido)}</span></td>
                     <td data-label="Filial"><strong>${escaparHTML(filial?.nome || "Filial não identificada")}</strong></td>
                     <td data-label="Itens solicitados">${listaItens}${pedido.observacao ? `<span class="detalhe-celula">${escaparHTML(pedido.observacao)}</span>` : ""}</td>
-                    <td data-label="Situacao"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span><span class="detalhe-celula">Enviado: ${formatarNumero(atendimento.enviado)} · Pendente: ${formatarNumero(atendimento.pendente)}</span>${producao ? `<span class="detalhe-celula">${escaparHTML(producao)}</span>` : ""}${entrega ? `<span class="detalhe-celula">${escaparHTML(entrega)}</span>` : ""}</td>
+                    <td data-label="Situacao"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span><span class="detalhe-celula ${envioParcial ? "detalhe-envio-parcial" : ""}">${envioParcial ? "Envio parcial" : "Enviado"}: ${formatarNumero(atendimento.enviado)} · Faltam: ${formatarNumero(pendenteParaEnvio)}</span>${remessasRecebidas || remessasEmTransito ? `<span class="detalhe-celula">Remessas: ${remessasRecebidas} recebida(s) · ${remessasEmTransito} em trânsito</span>` : ""}${producao ? `<span class="detalhe-celula">${escaparHTML(producao)}</span>` : ""}${entrega ? `<span class="detalhe-celula">${escaparHTML(entrega)}</span>` : ""}</td>
                     <td data-label="Acoes">${acoes}</td>
                 </tr>
             `;
@@ -1784,13 +1876,17 @@ function abrirModalAnalisarPedido(pedidoId) {
     elementos.tituloModalAnalisarPedido.textContent = `Pedido da filial ${filial?.nome || ""}`.trim();
     elementos.listaAnalisarPedido.innerHTML = renderizarItensAgrupadosPorCategoria(itensDoPedido(pedido), (item) => {
         const situacao = situacaoDoItemPedido(item, pedido);
+        const produto = buscarProduto(item.produtoId);
+        const estoqueNoCD = numeroInteiroNaoNegativo(produto?.quantidade);
         const acoes = situacao === "pendente"
-            ? `<div class="acoes-tabela"><button type="button" class="botao-acao acao-aprovar" data-acao="aprovar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Aprovar</button><button type="button" class="botao-acao acao-perigo" data-acao="recusar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Recusar</button></div>`
+            ? `<div class="acoes-tabela"><button type="button" class="botao-acao acao-aprovar" data-acao="aprovar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}"><span class="icone icone-check" aria-hidden="true"></span>Aprovar</button><button type="button" class="botao-acao acao-perigo" data-acao="recusar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}"><span class="icone icone-recusar" aria-hidden="true"></span>Recusar</button></div>`
             : "";
-        return `<article class="item-analise-pedido"><div class="item-analise-informacoes"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span><span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span>${item.observacaoMatriz ? `<span>${escaparHTML(item.observacaoMatriz)}</span>` : ""}</div><div class="item-analise-acoes"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span>${acoes}</div></article>`;
+        return `<article class="item-analise-pedido"><div class="item-analise-informacoes"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span><span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span><span class="estoque-disponivel-cd">Disponível no CD: ${formatarNumero(estoqueNoCD)} ${escaparHTML(item.unidade)}</span>${item.observacaoMatriz ? `<span>${escaparHTML(item.observacaoMatriz)}</span>` : ""}</div><div class="item-analise-acoes"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span>${acoes}</div></article>`;
     }, "grupo-itens-categoria-analise");
-    elementos.botaoEnviarPedidoAnalisado.disabled = true;
-    elementos.botaoEnviarPedidoAnalisado.hidden = true;
+    const todosItensAnalisados = itensDoPedido(pedido).every((item) => situacaoDoItemPedido(item, pedido) !== "pendente");
+    elementos.botaoEnviarPedidoAnalisado.disabled = !todosItensAnalisados;
+    elementos.botaoEnviarPedidoAnalisado.hidden = !todosItensAnalisados;
+    elementos.botaoEnviarPedidoAnalisado.innerHTML = '<span class="icone icone-saida" aria-hidden="true"></span>Criar remessa';
     elementos.botaoEnviarPedidoAnalisado.dataset.pedidoId = pedido.id;
     abrirModal(elementos.modalAnalisarPedido);
 }
@@ -2151,7 +2247,7 @@ function pedidosFiltradosRelatorio(intervalo = intervaloRelatorio()) {
     return estado.pedidos.filter((pedido) => {
         if (!pedidoNoPeriodo(pedido, intervalo.inicio, intervalo.fim)) return false;
         if (filtrosRelatorio.filialId && pedido.filialId !== filtrosRelatorio.filialId) return false;
-        if (filtrosRelatorio.status && situacaoDoPedido(pedido) !== filtrosRelatorio.status) return false;
+        if (!pedidoCorrespondeStatus(pedido, filtrosRelatorio.status)) return false;
         const itens = itensDoPedido(pedido).filter((item) => {
             const produto = buscarProduto(item.produtoId);
             return (!filtrosRelatorio.produtoId || item.produtoId === filtrosRelatorio.produtoId)
@@ -2371,7 +2467,7 @@ function renderizarPortalFilial() {
     atualizarEstoqueAtualDoItemPedido();
     renderizarCarrinhoPedido();
 
-    const pedidosFiltrados = pedidosDaFilial.filter((pedido) => !statusSelecionado || pedido.situacao === statusSelecionado);
+    const pedidosFiltrados = pedidosDaFilial.filter((pedido) => pedidoCorrespondeStatus(pedido, statusSelecionado));
     elementos.listaMeusPedidos.innerHTML = pedidosFiltrados.length
         ? pedidosFiltrados.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).map((pedido) => {
             const producao = pedido.producaoPrevista ? formatarDataSimples(pedido.producaoPrevista) : "";
@@ -2462,8 +2558,7 @@ function renderizarTudo() {
     renderizarPortalFilial();
     if (pedidoEmAnaliseId && elementos.modalAnalisarPedido.classList.contains("modal-aberto")) {
         const pedidoEmAnalise = estado.pedidos.find((pedido) => pedido.id === pedidoEmAnaliseId);
-        const haItensPendentes = pedidoEmAnalise?.itens?.some((item) => item.situacao === "pendente");
-        if (haItensPendentes) {
+        if (pedidoEmAnalise) {
             abrirModalAnalisarPedido(pedidoEmAnaliseId);
         } else {
             fecharModal(elementos.modalAnalisarPedido);
@@ -2634,14 +2729,19 @@ function preencherSeletoresEntrega(dataBase = new Date()) {
     elementos.entregaAno.value = String(anoAtual);
 }
 
-function configurarModalDataPedido(pedido, modo) {
+function configurarModalDataPedido(pedido, modo, produtoId = "") {
+    if (!pedido) return;
     const filial = buscarFilial(pedido.filialId);
-    const itens = itensEmAcao(pedido);
+    const itemEmProducao = produtoId ? itensDoPedido(pedido).find((item) => item.produtoId === produtoId) : null;
+    const itens = itemEmProducao ? [itemEmProducao] : itensEmAcao(pedido);
+    const atendimentoItem = itemEmProducao && window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens.find((item) => item.produtoId === produtoId);
     const textos = {
         iniciar_producao: {
-            titulo: "Prazo de produção",
-            resumo: `Informe até quando o pedido de ${filial?.nome || "a filial"} ficará em produção. A filial verá este prazo antes do agendamento do envio.`,
-            botao: "Iniciar produção"
+            titulo: itemEmProducao ? `Produção · ${itemEmProducao.produtoNome}` : "Prazo de produção",
+            resumo: itemEmProducao
+                ? `Faltam ${formatarNumero(atendimentoItem?.pendente || 0)} ${itemEmProducao.unidade}(s) para a filial ${filial?.nome || ""}. Defina a previsão somente deste produto.`
+                : `Informe até quando o pedido de ${filial?.nome || "a filial"} ficará em produção. A filial verá este prazo antes do agendamento do envio.`,
+            botao: itemEmProducao ? "Programar produção" : "Iniciar produção"
         },
         entrega: {
             titulo: "Data prevista de entrega",
@@ -2662,6 +2762,7 @@ function configurarModalDataPedido(pedido, modo) {
         campo.required = true;
     });
     elementos.entregaPedidoId.value = pedido.id;
+    elementos.entregaProdutoId.value = itemEmProducao?.produtoId || "";
     elementos.entregaModo.value = modo;
     elementos.tituloModalEntrega.textContent = textos.titulo;
     elementos.entregaResumo.textContent = textos.resumo;
@@ -2693,6 +2794,8 @@ function abrirModalEntrega(pedidoId) {
 
     const itens = itensEmAcao(pedido).filter((item) => (item.situacao || pedido.situacao) === "pendente");
     const item = itens[0];
+    const produto = buscarProduto(item.produtoId);
+    const estoqueNoCD = numeroInteiroNaoNegativo(produto?.quantidade);
     const maximo = item.quantidadeSolicitada;
     elementos.formularioEntrega.reset();
     elementos.entregaPedidoId.value = pedido.id;
@@ -2707,7 +2810,7 @@ function abrirModalEntrega(pedidoId) {
     elementos.entregaQuantidade.min = "1";
     elementos.entregaQuantidade.max = String(maximo);
     elementos.entregaQuantidade.value = String(maximo);
-    elementos.ajudaEntregaQuantidade.textContent = `Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${item.unidade}. O estoque será verificado após a aprovação de todos os itens.`;
+    elementos.ajudaEntregaQuantidade.innerHTML = `Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}.<br>Disponível no CD: ${formatarNumero(estoqueNoCD)} ${escaparHTML(item.unidade)}.`;
     elementos.campoEntregaData.hidden = true;
     [elementos.entregaDia, elementos.entregaMes, elementos.entregaAno].forEach((campo) => {
         campo.disabled = true;
@@ -2793,7 +2896,7 @@ function restaurarProduto(produtoId) {
     notificar("Produto restaurado ao estoque ativo.");
 }
 
-function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
+async function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     const item = itensEmAcao(pedido || {}).find((registro) => (registro.situacao || pedido?.situacao) === "pendente");
     const produto = item && buscarProduto(item.produtoId);
@@ -2804,12 +2907,40 @@ function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
         return;
     }
 
+    if (clienteSupabase && usuarioEhCD()) {
+        const { error } = await clienteSupabase.rpc("analisar_item_pedido", {
+            p_pedido_id: pedido.id,
+            p_produto_id: item.produtoId,
+            p_acao: "aprovar",
+            p_quantidade: quantidade,
+            p_motivo: null
+        });
+        if (error) {
+            console.error(error);
+            elementos.mensagemEntrega.textContent = error.message || "Não foi possível aprovar o item.";
+            return;
+        }
+        await carregarDadosSupabase();
+        fecharModal(elementos.modalEntrega);
+        const pedidoAtualizado = estado.pedidos.find((registro) => registro.id === pedido.id);
+        const todosAnalisados = pedidoAtualizado && itensDoPedido(pedidoAtualizado).every((registro) => situacaoDoItemPedido(registro, pedidoAtualizado) !== "pendente");
+        if (todosAnalisados) {
+            fecharModal(elementos.modalAnalisarPedido);
+            abrirModalEnviarPedido(pedido.id);
+            return;
+        }
+        abrirModalAnalisarPedido(pedido.id);
+        notificar("Item aprovado. Continue a análise dos demais itens.");
+        return;
+    }
+
+    item.situacao = "aprovado";
     item.quantidadeEnviada = quantidade;
     pedido.analisadoEm = new Date().toISOString();
     salvarEstado();
     fecharModal(elementos.modalEntrega);
     renderizarTudo();
-    const todosAnalisados = itensDoPedido(pedido).every((registro) => ["aprovado", "recusado"].includes(situacaoDoItemPedido(registro, pedido)));
+    const todosAnalisados = itensDoPedido(pedido).every((registro) => situacaoDoItemPedido(registro, pedido) !== "pendente");
     if (todosAnalisados) {
         fecharModal(elementos.modalAnalisarPedido);
         abrirModalEnviarPedido(pedido.id);
@@ -2821,7 +2952,7 @@ function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
 
 function abrirModalEnviarPedido(pedidoId) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
-    if (!pedido || !itensDoPedido(pedido).every((item) => ["aprovado", "recusado"].includes(situacaoDoItemPedido(item, pedido)))) {
+    if (!pedido || itensDoPedido(pedido).some((item) => situacaoDoItemPedido(item, pedido) === "pendente")) {
         notificar("Analise todos os itens antes de enviar o pedido.", "erro");
         return;
     }
@@ -2842,7 +2973,7 @@ function abrirModalNovaRemessa(pedidoId) {
         notificar("Este pedido já foi totalmente expedido.", "erro");
         return;
     }
-    const haSaldoParaRemessa = itensDisponiveis.some((item) => window.PedidosUtils.quantidadeMaximaRemessa(pedido, estado.remessas, item.produtoId, buscarProduto(item.produtoId)?.quantidade || 0) > 0);
+    const haSaldoParaRemessa = itensDisponiveis.some((item) => quantidadeDisponivelParaPedido(pedido, item.produtoId) > 0);
     if (!haSaldoParaRemessa) {
         configurarModalDataPedido(pedido, "iniciar_producao");
         return;
@@ -2855,8 +2986,9 @@ function abrirModalNovaRemessa(pedidoId) {
     elementos.listaItensRemessa.innerHTML = itensDisponiveis.map((item) => {
         const produto = buscarProduto(item.produtoId);
         const estoque = numeroInteiroNaoNegativo(produto?.quantidade);
-        const maximo = window.PedidosUtils.quantidadeMaximaRemessa(pedido, estado.remessas, item.produtoId, estoque);
-        return `<label class="item-remessa"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.solicitado)} · Já enviado: ${formatarNumero(item.enviado)} · Pendente: ${formatarNumero(item.pendente)} · CD: ${formatarNumero(estoque)} ${escaparHTML(item.unidade)}</span><input type="number" min="0" max="${maximo}" step="1" value="${maximo}" data-remessa-produto-id="${escaparHTML(item.produtoId)}" aria-label="Quantidade de ${escaparHTML(item.produtoNome)} nesta remessa" ${maximo ? "" : "disabled"}></label>`;
+        const disponivel = quantidadeDisponivelParaPedido(pedido, item.produtoId);
+        const maximo = Math.min(item.pendente, disponivel);
+        return `<label class="item-remessa"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.solicitado)} · Já enviado: ${formatarNumero(item.enviado)} · Pendente: ${formatarNumero(item.pendente)} · CD: ${formatarNumero(estoque)} · Disponível para este pedido: ${formatarNumero(disponivel)} ${escaparHTML(item.unidade)}</span><input type="number" min="0" max="${maximo}" step="1" value="${maximo}" data-remessa-produto-id="${escaparHTML(item.produtoId)}" aria-label="Quantidade de ${escaparHTML(item.produtoNome)} nesta remessa" ${maximo ? "" : "disabled"}></label>`;
     }).join("");
     abrirModal(elementos.modalRemessa);
 }
@@ -2891,13 +3023,13 @@ async function criarRemessaDoFormulario() {
     notificar("Remessa expedida. O estoque do CD foi atualizado.");
 }
 
-function iniciarProducaoPedido(pedidoId, prazoProducao) {
+async function iniciarProducaoPedido(pedidoId, prazoProducao, produtoId = "") {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     if (!pedido) return;
 
-    const itens = itensDoPedido(pedido);
-    if (!itens.every((item) => ["aprovado", "recusado", "em_transito", "em_producao"].includes(situacaoDoItemPedido(item, pedido)))) {
-        notificar("Analise todos os itens antes de enviar o pedido.", "erro");
+    const itens = produtoId ? itensDoPedido(pedido).filter((item) => item.produtoId === produtoId) : itensDoPedido(pedido);
+    if (!itens.every((item) => ["aprovado", "recusado", "em_transito", "recebido", "em_producao"].includes(situacaoDoItemPedido(item, pedido)))) {
+        notificar("Analise todos os itens antes de iniciar a produção.", "erro");
         return;
     }
 
@@ -2914,9 +3046,27 @@ function iniciarProducaoPedido(pedidoId, prazoProducao) {
         elementos.mensagemEntrega.textContent = "Escolha um prazo de produção válido.";
         return;
     }
+
+    if (clienteSupabase) {
+        const { error } = produtoId
+            ? await clienteSupabase.rpc("iniciar_producao_item_pedido", { p_pedido_id: pedido.id, p_produto_id: produtoId, p_prazo_producao: prazoProducao })
+            : await clienteSupabase.rpc("iniciar_producao_pedido", { p_pedido_id: pedido.id, p_prazo_producao: prazoProducao });
+        if (error) {
+            console.error(error);
+            elementos.mensagemEntrega.textContent = error.message || "Não foi possível iniciar a produção.";
+            return;
+        }
+        fecharModal(elementos.modalEntrega);
+        fecharModal(elementos.modalAnalisarPedido);
+        await carregarDadosSupabase();
+        notificar("Produção iniciada. Registre a entrada produzida no estoque antes de criar a próxima remessa.");
+        return;
+    }
+
     const agora = new Date().toISOString();
     itensAprovados.forEach((item) => {
         item.situacao = "em_producao";
+        item.producaoPrevista = prazoProducao;
     });
     atualizarSituacaoDoPedido(pedido);
     pedido.producaoPrevista = prazoProducao;
@@ -3093,12 +3243,16 @@ function abrirModalDetalhesPedido(pedidoId) {
         const atendimentoItem = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens.find((registro) => registro.produtoId === item.produtoId);
         const foiEnviado = (atendimentoItem?.enviado || 0) > 0;
         const quantidadeEnviada = atendimentoItem?.enviado || 0;
+        const quantidadePendente = atendimentoItem?.pendente || 0;
+        const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
+        const envioParcial = foiEnviado && quantidadePendente > 0;
+        const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && situacao !== "recusado" && quantidadePendente > disponibilidade;
         const confirmadoEm = atendimentoItem?.totalmenteRecebido ? (atendimentoItem.recebidoEm || pedido.recebidoEm) : null;
         const descricao = foiEnviado
             ? situacao === "recebido" ? "Recebido pela filial." : "Enviado pelo CD e aguardando confirmação."
             : {
                 recusado: "Não enviado: item recusado pelo CD.",
-                em_producao: "Em produção no CD. Aguarde o envio após o prazo informado.",
+                em_producao: item.producaoPrevista ? `Em produção no CD. Previsão: ${formatarDataSimples(item.producaoPrevista)}.` : "Em produção no CD. Previsão ainda não informada.",
                 agendado_envio: "Envio agendado pelo CD. Aguarde a confirmação de despacho.",
                 pendente: "Não enviado: aguardando análise do CD."
             }[situacao] || "Não enviado pelo CD.";
@@ -3106,20 +3260,22 @@ function abrirModalDetalhesPedido(pedidoId) {
             <article class="item-detalhes-pedido">
                 <div>
                     <strong>${escaparHTML(item.produtoNome)}</strong>
-                    <span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)} · Enviado: ${formatarNumero(quantidadeEnviada)} ${escaparHTML(item.unidade)}</span>
+                    <span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)} · Enviado: ${formatarNumero(quantidadeEnviada)} · Faltam: ${formatarNumero(quantidadePendente)} ${escaparHTML(item.unidade)}</span>
                     <span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span>
                     <span>${escaparHTML(descricao)}</span>
                 </div>
                 <div class="acoes-item-detalhes">
-                    <span class="selo-tipo ${foiEnviado ? "tipo-aprovado" : classeSituacaoPedido(situacao)}">${foiEnviado ? "Enviado" : "Não enviado"}</span>
+                    <span class="selo-tipo ${foiEnviado ? "tipo-aprovado" : classeSituacaoPedido(situacao)}">${envioParcial ? "Envio parcial" : foiEnviado ? "Enviado" : "Não enviado"}</span>
                     ${confirmadoEm ? `<span class="data-recebimento-item">Confirmado em<br>${formatarData(confirmadoEm)}</span>` : ""}
+                    ${precisaProducao ? `<button type="button" class="botao-acao acao-aprovar" data-acao="iniciar-producao-item" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Programar produção<br><small>Faltam ${formatarNumero(quantidadePendente - disponibilidade)}</small></button>` : ""}
                 </div>
             </article>
         `;
     }, "grupo-itens-categoria-detalhes");
-    const remessas = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).remessas;
+    const remessas = [...window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).remessas]
+        .sort((a, b) => new Date(a.enviadaEm || 0) - new Date(b.enviadaEm || 0));
     if (remessas.length) {
-        elementos.listaDetalhesPedido.innerHTML = `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Remessas <span>${remessas.length}</span></h4><div class="lista-itens-categoria">${remessas.map((remessa, indice) => `<article class="item-pedido-resumo"><strong>Remessa ${indice + 1} · ${remessa.situacao === "recebida" ? "Recebida" : remessa.situacao === "cancelada" ? "Cancelada" : "Em trânsito"}</strong><span>${remessa.itens.map((item) => `${buscarProduto(item.produtoId)?.nome || "Produto"}: ${formatarNumero(item.quantidade)}`).join(" · ")}</span><span>Enviada em ${formatarData(remessa.enviadaEm)}${remessa.recebidaEm ? ` · Recebida em ${formatarData(remessa.recebidaEm)}` : ""}</span>${remessa.situacao === "em_transito" ? (usuarioEhCD() ? `<button type="button" class="botao-acao acao-perigo" data-acao="cancelar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}">Cancelar remessa</button>` : `<button type="button" class="botao-acao acao-aprovar" data-acao="confirmar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}">Confirmar recebimento</button>`) : ""}</article>`).join("")}</div></section>` + elementos.listaDetalhesPedido.innerHTML;
+        elementos.listaDetalhesPedido.innerHTML = `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Remessas <span>${remessas.length}</span></h4><div class="lista-itens-categoria">${remessas.map((remessa, indice) => `<article class="item-pedido-resumo"><strong>Remessa ${indice + 1} · ${remessa.situacao === "recebida" ? "Recebida" : remessa.situacao === "cancelada" ? "Cancelada" : "Em trânsito"}</strong><span>${remessa.itens.map((item) => `${buscarProduto(item.produtoId)?.nome || "Produto"}: ${formatarNumero(item.quantidade)}`).join(" · ")}</span><span>Enviada em ${formatarData(remessa.enviadaEm)}${remessa.recebidaEm ? ` · Recebida em ${formatarData(remessa.recebidaEm)}` : ""}</span>${remessa.situacao === "em_transito" ? `${usuarioEhCD() && !estaNoPortalFilial() ? `<button type="button" class="botao-acao acao-perigo" data-acao="cancelar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}">Cancelar remessa</button>` : ""}${podeConfirmarRecebimento(pedido) ? `<button type="button" class="botao-acao acao-aprovar" data-acao="confirmar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}"><span class="icone icone-check" aria-hidden="true"></span>Confirmar recebimento</button>` : ""}` : ""}</article>`).join("")}</div></section>` + elementos.listaDetalhesPedido.innerHTML;
     }
     const eventos = estado.eventosPedido.filter((evento) => evento.pedidoId === pedido.id).sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
     if (eventos.length) elementos.listaDetalhesPedido.innerHTML += `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Histórico <span>${eventos.length} eventos</span></h4><div class="lista-itens-categoria">${eventos.map((evento) => `<article class="item-pedido-resumo"><strong>${escaparHTML(textoEventoPedido(evento.tipo))}</strong><span>${formatarData(evento.criadoEm)}</span></article>`).join("")}</div></section>`;
@@ -3132,6 +3288,11 @@ function textoEventoPedido(tipo) {
 
 async function confirmarRecebimentoRemessa(remessaId, pedidoId) {
     if (!clienteSupabase) return;
+    const pedido = estado.pedidos.find((item) => item.id === pedidoId);
+    if (!podeConfirmarRecebimento(pedido)) {
+        notificar("Somente o administrador do CD ou a filial destinatária pode confirmar esta remessa.", "erro");
+        return;
+    }
     const { error } = await clienteSupabase.rpc("confirmar_recebimento_remessa", { p_remessa_id: remessaId });
     if (error) {
         console.error(error);
@@ -3322,7 +3483,26 @@ async function recusarPedido(pedidoId) {
     notificar("Pedido recusado.");
 }
 
-async function recusarItemPedido(pedidoId, produtoId) {
+function abrirModalRecusarItem(pedidoId, produtoId) {
+    const pedido = estado.pedidos.find((item) => item.id === pedidoId);
+    const item = pedido && itensDoPedido(pedido).find((registro) => String(registro.produtoId) === String(produtoId));
+
+    if (!pedido || !item || situacaoDoItemPedido(item, pedido) !== "pendente") {
+        notificar("Este item já foi analisado ou não está mais disponível para recusa.", "erro");
+        return;
+    }
+
+    elementos.formularioRecusarItem.reset();
+    elementos.recusaPedidoId.value = pedido.id;
+    elementos.recusaProdutoId.value = item.produtoId;
+    elementos.tituloModalRecusarItem.textContent = "Recusar item";
+    elementos.resumoRecusarItem.textContent = `Informe o motivo da recusa de ${item.produtoNome}. A filial poderá visualizar esta informação.`;
+    elementos.mensagemRecusarItem.textContent = "";
+    abrirModal(elementos.modalRecusarItem);
+    setTimeout(() => elementos.motivoRecusarItem.focus(), 0);
+}
+
+async function recusarItemPedido(pedidoId, produtoId, motivo) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     if (!pedido) {
         notificar("Não foi possível localizar o pedido. Atualize a página e tente novamente.", "erro");
@@ -3341,44 +3521,24 @@ async function recusarItemPedido(pedidoId, produtoId) {
         return;
     }
 
-    const motivo = window.prompt(`Informe o motivo da recusa de ${item.produtoNome}:`);
-    if (motivo === null) return;
-
     const observacaoMatriz = motivo.trim() || "Item recusado pelo CD.";
-    const atualizadoEmAnterior = pedido.atualizadoEm;
 
     if (clienteSupabase && usuarioEhCD()) {
-        const { data: itemAtualizado, error: erroItem } = await clienteSupabase.from("pedido_itens")
-            .update({ situacao: "recusado", observacao_matriz: observacaoMatriz })
-            .eq("pedido_id", pedido.id)
-            .eq("produto_id", item.produtoId)
-            .select("pedido_id");
-
-        if (erroItem || !itemAtualizado?.length) {
-            if (erroItem) console.error(erroItem);
-            notificar(erroItem ? `Não foi possível recusar o item: ${erroItem.message}` : "Não foi possível localizar o item para recusa. Atualize a página e tente novamente.", "erro");
-            return;
-        }
-
-        item.situacao = "recusado";
-        item.observacaoMatriz = observacaoMatriz;
-        atualizarSituacaoDoPedido(pedido);
-        pedido.analisadoEm = new Date().toISOString();
-
-        const { data, error: erroPedido } = await clienteSupabase.from("pedidos")
-            .update({ situacao: pedido.situacao, analisado_em: pedido.analisadoEm, atualizado_em: pedido.atualizadoEm })
-            .eq("id", pedido.id)
-            .eq("atualizado_em", atualizadoEmAnterior)
-            .select("id");
-
-        if (erroPedido || !data?.length) {
-            if (erroPedido) console.error(erroPedido);
-            await carregarDadosSupabase();
-            notificar(erroPedido ? `O item foi recusado, mas não foi possível atualizar o pedido: ${erroPedido.message}` : "O item foi recusado, mas o pedido foi alterado em outra sessão. Os dados foram atualizados.", "erro");
+        const { error } = await clienteSupabase.rpc("analisar_item_pedido", {
+            p_pedido_id: pedido.id,
+            p_produto_id: item.produtoId,
+            p_acao: "recusar",
+            p_quantidade: null,
+            p_motivo: observacaoMatriz
+        });
+        if (error) {
+            console.error(error);
+            notificar(`Não foi possível recusar o item: ${error.message}`, "erro");
             return;
         }
 
         await carregarDadosSupabase();
+        fecharModal(elementos.modalRecusarItem);
         abrirModalAnalisarPedido(pedido.id);
         notificar("Item recusado.");
         return;
@@ -3389,6 +3549,7 @@ async function recusarItemPedido(pedidoId, produtoId) {
     atualizarSituacaoDoPedido(pedido);
     salvarEstado();
     renderizarTudo();
+    fecharModal(elementos.modalRecusarItem);
     abrirModalAnalisarPedido(pedido.id);
     notificar("Item recusado.");
 }
@@ -3548,6 +3709,12 @@ function lidarComAcao(acao, elemento) {
         case "criar-remessa":
             abrirModalNovaRemessa(elemento.dataset.pedidoId);
             break;
+        case "iniciar-producao-pedido":
+            configurarModalDataPedido(estado.pedidos.find((pedido) => pedido.id === elemento.dataset.pedidoId), "iniciar_producao");
+            break;
+        case "iniciar-producao-item":
+            configurarModalDataPedido(estado.pedidos.find((pedido) => pedido.id === elemento.dataset.pedidoId), "iniciar_producao", elemento.dataset.produtoId);
+            break;
         case "enviar-pedido-produzido":
             enviarPedidoProduzido(elemento.dataset.pedidoId);
             break;
@@ -3559,7 +3726,7 @@ function lidarComAcao(acao, elemento) {
             abrirModalEntrega(elemento.dataset.pedidoId);
             break;
         case "recusar-item-pedido":
-            recusarItemPedido(elemento.dataset.pedidoId, elemento.dataset.produtoId);
+            abrirModalRecusarItem(elemento.dataset.pedidoId, elemento.dataset.produtoId);
             break;
         case "aprovar-pedido":
             abrirModalEntrega(elemento.dataset.pedidoId);
@@ -3687,15 +3854,7 @@ document.addEventListener("click", (evento) => {
     if (!evento.target.closest(".menu-lateral") && !evento.target.closest("#botao-menu-mobile")) fecharMenuMobile();
 });
 
-elementos.listaAnalisarPedido?.addEventListener("click", (evento) => {
-    const botaoRecusar = evento.target.closest('[data-acao="recusar-item-pedido"]');
-    if (!botaoRecusar) return;
-
-    evento.stopPropagation();
-    recusarItemPedido(botaoRecusar.dataset.pedidoId, botaoRecusar.dataset.produtoId);
-});
-
-[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido].forEach((modal) => {
+[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRecusarItem, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido].forEach((modal) => {
     modal.addEventListener("click", (evento) => {
         if (evento.target === modal) fecharModal(modal);
     });
@@ -3710,6 +3869,7 @@ document.addEventListener("keydown", (evento) => {
         fecharModal(elementos.modalPedido);
         fecharModal(elementos.modalEntrega);
         fecharModal(elementos.modalAnalisarPedido);
+        fecharModal(elementos.modalRecusarItem);
         fecharModal(elementos.modalRemessa);
         fecharModal(elementos.modalUsuario);
         fecharModal(elementos.modalAlterarSenha);
@@ -3755,6 +3915,7 @@ elementos.paginacaoProdutos?.addEventListener("click", (evento) => {
 elementos.buscaHistorico.addEventListener("input", renderizarHistorico);
 elementos.filtroHistorico.addEventListener("change", renderizarHistorico);
 elementos.filtroStatusPedidos.addEventListener("change", renderizarPedidos);
+elementos.filtroStatusItensPedidos.addEventListener("change", renderizarPedidos);
 elementos.filtroStatusMeusPedidos.addEventListener("change", renderizarPortalFilial);
 elementos.movimentoProduto.addEventListener("change", () => {
     produtoSelecionadoMovimentacao = elementos.movimentoProduto.value;
@@ -4009,7 +4170,7 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
     const dataSelecionada = `${ano}-${mes}-${dia}`;
 
     if (elementos.entregaModo.value === "iniciar_producao") {
-        iniciarProducaoPedido(elementos.entregaPedidoId.value, dataSelecionada);
+        iniciarProducaoPedido(elementos.entregaPedidoId.value, dataSelecionada, elementos.entregaProdutoId.value);
         return;
     }
 
@@ -4023,6 +4184,20 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
 
 elementos.botaoEnviarPedidoAnalisado.addEventListener("click", () => {
     abrirModalEnviarPedido(elementos.botaoEnviarPedidoAnalisado.dataset.pedidoId);
+});
+
+elementos.formularioRecusarItem.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    const motivo = elementos.motivoRecusarItem.value.trim();
+
+    elementos.mensagemRecusarItem.textContent = "";
+    if (!motivo) {
+        elementos.mensagemRecusarItem.textContent = "Informe o motivo da recusa para continuar.";
+        elementos.motivoRecusarItem.focus();
+        return;
+    }
+
+    recusarItemPedido(elementos.recusaPedidoId.value, elementos.recusaProdutoId.value, motivo);
 });
 
 elementos.formularioRemessa.addEventListener("submit", (evento) => {

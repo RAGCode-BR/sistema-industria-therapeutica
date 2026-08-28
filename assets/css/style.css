@@ -75,6 +75,7 @@ button {
 .icone-config { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z'/%3E%3Cpath d='M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L4.2 7A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z'/%3E%3C/svg%3E"); }
 .icone-plus { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 5v14'/%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E"); }
 .icone-check { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m5 12 4.2 4.2L19 6.5'/%3E%3C/svg%3E"); }
+.icone-recusar { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m7 7 10 10M17 7 7 17'/%3E%3C/svg%3E"); }
 .icone-logout { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 17l5-5-5-5'/%3E%3Cpath d='M15 12H3'/%3E%3Cpath d='M12 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6'/%3E%3C/svg%3E"); }
 .icone-menu { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.3' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 7h16'/%3E%3Cpath d='M4 12h16'/%3E%3Cpath d='M4 17h16'/%3E%3C/svg%3E"); }
 .icone-recolher-menu { --icone: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m14 6-6 6 6 6'/%3E%3Cpath d='M20 4v16'/%3E%3C/svg%3E"); }
@@ -1251,14 +1252,19 @@ td {
 
 #pagina-pedidos table { table-layout: fixed; }
 #pagina-pedidos th:nth-child(1), #pagina-pedidos td:nth-child(1) { width: 12%; }
-#pagina-pedidos th:nth-child(2), #pagina-pedidos td:nth-child(2) { width: 20%; }
+#pagina-pedidos th:nth-child(2), #pagina-pedidos td:nth-child(2) { width: 12%; }
 #pagina-pedidos th:nth-child(3), #pagina-pedidos td:nth-child(3) { width: 10%; }
-#pagina-pedidos th:nth-child(4), #pagina-pedidos td:nth-child(4) { width: 32%; }
+#pagina-pedidos th:nth-child(4), #pagina-pedidos td:nth-child(4) { width: 40%; }
 #pagina-pedidos th:nth-child(5), #pagina-pedidos td:nth-child(5) { width: 14%; }
 #pagina-pedidos th:nth-child(6), #pagina-pedidos td:nth-child(6) { width: 12%; }
 #pagina-pedidos th:not(:nth-child(4)),
 #pagina-pedidos td:not(:nth-child(4)) { text-align: center; vertical-align: middle; }
 #pagina-pedidos td:nth-child(6) .botao-acao { justify-content: center; }
+#pagina-pedidos .acoes-pedido-cd {
+    align-items: center;
+    flex-direction: column;
+    min-width: 0;
+}
 #pagina-pedidos th:not(:last-child),
 #pagina-pedidos td:not(:last-child) { border-right: 1px solid #f3e8e3; }
 
@@ -1344,7 +1350,8 @@ tbody tr:last-child td {
 .status-normal,
 .tipo-entrada,
 .tipo-aprovado,
-.tipo-recebido {
+.tipo-recebido,
+.tipo-finalizado {
     color: #2f744e;
     background: var(--verde-claro);
 }
@@ -1373,6 +1380,55 @@ tbody tr:last-child td {
 .item-remessa input {
     max-width: 11rem;
 }
+
+#modal-remessa .acoes-formulario {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borda);
+}
+
+#modal-remessa .acoes-formulario .botao-principal,
+#modal-remessa .acoes-formulario .botao-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 15px;
+    margin-top: 0;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+#modal-remessa .acoes-formulario .botao-secundario { min-width: 96px; }
+#modal-remessa .acoes-formulario .botao-principal {
+    min-width: 148px;
+    background: linear-gradient(135deg, #ed866f, var(--salmão));
+    box-shadow: 0 8px 18px rgba(201, 93, 73, 0.24);
+}
+#modal-remessa .acoes-formulario .botao-principal .icone { width: 15px; height: 15px; }
+
+#modal-analisar-pedido .acoes-formulario {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borda);
+}
+
+#modal-analisar-pedido #botao-enviar-pedido-analisado {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    margin-top: 0;
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    background: linear-gradient(135deg, #ed866f, var(--salmão));
+    box-shadow: 0 8px 18px rgba(201, 93, 73, 0.24);
+}
+
+#modal-analisar-pedido #botao-enviar-pedido-analisado .icone { width: 15px; height: 15px; }
 
 .status-sem-estoque {
     color: var(--vermelho);
@@ -1918,8 +1974,22 @@ tbody tr:last-child td {
 
 .grupo-itens-categoria-resumo .item-pedido-resumo {
     align-items: flex-start;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.informacoes-item-resumo {
+    display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 3px;
+    min-width: 0;
+}
+
+.selo-status-item {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    white-space: nowrap;
 }
 
 .item-pedido-resumo {
@@ -1937,6 +2007,8 @@ tbody tr:last-child td {
 
 .filtros-status-pedidos {
     display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     width: fit-content;
     padding: 0;
     margin: 0 0 16px;
@@ -1964,6 +2036,11 @@ tbody tr:last-child td {
 .item-pedido-resumo .motivo-recusa-pedido {
     color: var(--vermelho);
     font-weight: 700;
+}
+
+.detalhe-celula.detalhe-envio-parcial {
+    color: #a96c00;
+    font-weight: 800;
 }
 
 .acoes-pedido-filial {
@@ -2077,12 +2154,41 @@ tbody tr:last-child td {
     font-size: 12px;
 }
 
+.item-analise-informacoes .estoque-disponivel-cd {
+    color: var(--verde);
+    font-weight: 800;
+}
+
 .item-analise-acoes {
     align-items: flex-end;
     min-width: max-content;
 }
 
-.item-analise-acoes .acoes-tabela { margin-top: 3px; }
+.item-analise-acoes .acoes-tabela {
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.item-analise-acoes .botao-acao {
+    min-height: 34px;
+    padding: 7px 11px;
+    border-radius: 8px;
+}
+
+.modal-entrega-conteudo .acoes-formulario {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borda);
+}
+
+.modal-entrega-conteudo .acoes-formulario .botao-principal,
+.modal-entrega-conteudo .acoes-formulario .botao-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 9px 14px;
+}
 
 .filial-card,
 .cartao-configuracao,
@@ -2575,7 +2681,7 @@ small {
     #pagina-pedidos tbody td:nth-child(4) { padding-bottom: 8px; }
     #pagina-pedidos .grupo-itens-categoria { margin: 8px 0; }
     #pagina-pedidos .grupo-itens-categoria h4 { padding: 10px 12px; }
-    #pagina-pedidos .item-pedido-resumo { align-items: flex-start; flex-direction: column; gap: 4px; padding: 3px 0; }
+    #pagina-pedidos .item-pedido-resumo { align-items: flex-start; flex-direction: row; gap: 8px; padding: 3px 0; }
     #pagina-pedidos .item-pedido-resumo strong { font-size: 14px; line-height: 1.35; }
     #pagina-pedidos .item-pedido-resumo span { line-height: 1.45; }
     #pagina-pedidos tbody td:nth-child(5) { display: grid; gap: 7px; }
@@ -2782,4 +2888,32 @@ svg { max-width: 100%; }
     .menu-lateral.menu-reduzido { width: min(280px, calc(100vw - 34px)); flex-basis: min(280px, calc(100vw - 34px)); }
     .item-analise-pedido,
     .item-detalhes-pedido { padding: 12px; }
+}
+
+/* Mais respiro entre as categorias e os produtos no resumo dos pedidos. */
+.grupo-itens-categoria-filial {
+    margin: 18px 0;
+}
+
+.grupo-itens-categoria-filial h4 {
+    padding: 11px 14px;
+}
+
+.grupo-itens-categoria-filial .lista-itens-categoria {
+    gap: 0;
+    padding: 4px 14px;
+}
+
+.grupo-itens-categoria-filial .item-pedido-resumo {
+    gap: 6px;
+    padding: 9px 0;
+}
+
+.grupo-itens-categoria-filial .item-pedido-resumo + .item-pedido-resumo {
+    border-top: 1px solid #f4e8e3;
+}
+
+@media (max-width: 520px) {
+    #pagina-meus-pedidos .grupo-itens-categoria-filial { margin: 14px 0; }
+    #pagina-meus-pedidos .grupo-itens-categoria-filial .item-pedido-resumo { gap: 6px; padding: 10px 0; }
 }
