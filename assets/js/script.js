@@ -211,6 +211,7 @@ const elementos = {
     entregaAno: document.querySelector("#entrega-ano"),
     mensagemEntrega: document.querySelector("#mensagem-entrega"),
     botaoConfirmarData: document.querySelector("#botao-confirmar-data"),
+    botaoAprovarParaProducao: document.querySelector("#botao-aprovar-para-producao"),
     modalAnalisarPedido: document.querySelector("#modal-analisar-pedido"),
     tituloModalAnalisarPedido: document.querySelector("#titulo-modal-analisar-pedido"),
     listaAnalisarPedido: document.querySelector("#lista-analisar-pedido"),
@@ -281,6 +282,7 @@ const elementos = {
     itemPedidoProduto: document.querySelector("#item-pedido-produto"),
     itemPedidoEstoque: document.querySelector("#item-pedido-estoque"),
     itemPedidoQuantidade: document.querySelector("#item-pedido-quantidade"),
+    disponibilidadeCdItemPedido: document.querySelector("#disponibilidade-cd-item-pedido"),
     mensagemItemPedido: document.querySelector("#mensagem-item-pedido"),
     itensCarrinhoPedido: document.querySelector("#itens-carrinho-pedido"),
     quantidadeItensCarrinho: document.querySelector("#quantidade-itens-carrinho"),
@@ -2831,6 +2833,19 @@ function renderizarCarrinhoPedido() {
 
 function atualizarEstoqueAtualDoItemPedido() {
     elementos.itemPedidoEstoque.value = "";
+    const produto = buscarProduto(elementos.itemPedidoProduto.value);
+    const busca = elementos.buscaItemPedido.value.trim().toLocaleLowerCase("pt-BR");
+    const textoProduto = produto ? `${produto.codigo ? `${produto.codigo} · ` : ""}${produto.nome}`.toLocaleLowerCase("pt-BR") : "";
+    const produtoFoiSelecionado = Boolean(busca) && (busca === textoProduto || busca === String(produto?.codigo || "").toLocaleLowerCase("pt-BR") || busca === produto?.nome?.toLocaleLowerCase("pt-BR"));
+
+    if (!produto || !produtoFoiSelecionado) {
+        elementos.disponibilidadeCdItemPedido.hidden = true;
+        elementos.disponibilidadeCdItemPedido.textContent = "";
+        return;
+    }
+
+    elementos.disponibilidadeCdItemPedido.hidden = false;
+    elementos.disponibilidadeCdItemPedido.innerHTML = `<span>Estoque disponível no CD</span><strong>${formatarNumero(numeroInteiroNaoNegativo(produto.quantidade))} ${escaparHTML(produto.unidade)}</strong>`;
 }
 
 function selecionarProdutoPedidoPorBusca() {
@@ -3113,6 +3128,7 @@ function configurarModalDataPedido(pedido, modo, produtoId = "") {
     elementos.entregaResumo.textContent = textos.resumo;
     definirTextoBotaoConfirmarEntrega(textos.botao);
     elementos.botaoConfirmarData.disabled = false;
+    elementos.botaoAprovarParaProducao.hidden = true;
     elementos.mensagemEntrega.textContent = "";
 
     const itemUnico = modo === "entrega" && itens.length === 1;
@@ -3152,6 +3168,7 @@ function abrirModalEntrega(pedidoId) {
     elementos.entregaResumo.textContent = `Informe a quantidade de ${item.produtoNome} que sera enviada.`;
     definirTextoBotaoConfirmarEntrega("Aprovar item");
     elementos.botaoConfirmarData.disabled = maximo === 0;
+    elementos.botaoAprovarParaProducao.hidden = maximo > 0;
     elementos.mensagemEntrega.textContent = maximo === 0
         ? "Não há estoque disponível no CD para aprovar este item. Faça a entrada ou programe a produção antes de aprová-lo."
         : "";
@@ -3169,6 +3186,52 @@ function abrirModalEntrega(pedidoId) {
     });
     abrirModal(elementos.modalEntrega);
     if (maximo > 0) setTimeout(() => elementos.entregaQuantidade.focus(), 0);
+}
+
+async function aprovarItemParaProducao(pedidoId) {
+    const pedido = estado.pedidos.find((registro) => registro.id === pedidoId);
+    const item = itensEmAcao(pedido || {}).find((registro) => (registro.situacao || pedido?.situacao) === "pendente");
+    const produto = item && buscarProduto(item.produtoId);
+
+    if (!pedido || !item || !produto || !produto.ativo) {
+        elementos.mensagemEntrega.textContent = "Não foi possível preparar este item para produção.";
+        return;
+    }
+
+    elementos.botaoAprovarParaProducao.disabled = true;
+    elementos.mensagemEntrega.textContent = "";
+
+    if (clienteSupabase && usuarioEhCD()) {
+        const { error } = await clienteSupabase.rpc("aprovar_item_para_producao", {
+            p_pedido_id: pedido.id,
+            p_produto_id: item.produtoId
+        });
+        if (error) {
+            console.error(error);
+            elementos.mensagemEntrega.textContent = error.message || "Não foi possível aprovar o item para produção.";
+            elementos.botaoAprovarParaProducao.disabled = false;
+            return;
+        }
+
+        await carregarDadosSupabase();
+        fecharModal(elementos.modalEntrega);
+        const pedidoAtualizado = estado.pedidos.find((registro) => registro.id === pedido.id);
+        // Reabre a mesma janela já configurada para produção acima da análise.
+        // O pequeno atraso garante que o fechamento anterior seja aplicado antes
+        // do cálculo da nova camada do modal.
+        await new Promise((resolver) => setTimeout(resolver, 0));
+        configurarModalDataPedido(pedidoAtualizado, "iniciar_producao", item.produtoId);
+        return;
+    }
+
+    item.situacao = "aprovado";
+    item.quantidadeEnviada = null;
+    pedido.analisadoEm = new Date().toISOString();
+    atualizarSituacaoDoPedido(pedido);
+    salvarEstado();
+    renderizarTudo();
+    fecharModal(elementos.modalEntrega);
+    configurarModalDataPedido(pedido, "iniciar_producao", item.produtoId);
 }
 
 function arquivarProduto(produtoId) {
@@ -3617,8 +3680,12 @@ function abrirModalDetalhesPedido(pedidoId) {
         const saldoEncerrado = atendimentoItem?.encerrado || 0;
         const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
         const envioParcial = foiEnviado && quantidadePendente > 0;
-        const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && situacao !== "recusado" && quantidadePendente > disponibilidade;
-        const producaoProgramada = Boolean(item.producaoPrevista) && quantidadePendente > 0;
+        // Produção é uma decisão posterior à aprovação do CD. Um pedido ainda
+        // pendente pode indicar falta de saldo, mas não deve exibir uma ação que
+        // permita programá-lo antes de ter sido analisado.
+        const itemAprovadoParaProducao = ["aprovado", "em_producao"].includes(situacao);
+        const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && itemAprovadoParaProducao && quantidadePendente > disponibilidade;
+        const producaoProgramada = itemAprovadoParaProducao && Boolean(item.producaoPrevista) && quantidadePendente > 0;
         const acaoProducao = (precisaProducao || producaoProgramada)
             ? producaoProgramada
                 ? `<button type="button" class="botao-acao botao-producao-programada" disabled>Produção programada<br><small>Prevista para ${formatarDataSimples(item.producaoPrevista)}</small></button>`
@@ -4699,6 +4766,10 @@ elementos.formularioEntrega.addEventListener("submit", (evento) => {
     }
 
     aprovarPedido(elementos.entregaPedidoId.value, dataSelecionada, elementos.campoEntregaQuantidade.hidden ? null : elementos.entregaQuantidade.value);
+});
+
+elementos.botaoAprovarParaProducao.addEventListener("click", () => {
+    aprovarItemParaProducao(elementos.entregaPedidoId.value);
 });
 
 elementos.botaoEnviarPedidoAnalisado.addEventListener("click", () => {

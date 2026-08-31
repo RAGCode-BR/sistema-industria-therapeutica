@@ -543,7 +543,10 @@
                             </div>
 
                             <p class="mensagem-formulario" id="mensagem-item-pedido" aria-live="polite"></p>
-                            <button class="botao-secundario botao-adicionar-item" type="submit"><span class="icone icone-plus" aria-hidden="true"></span>Adicionar à lista</button>
+                            <div class="acoes-adicionar-item-pedido">
+                                <button class="botao-secundario botao-adicionar-item" type="submit"><span class="icone icone-plus" aria-hidden="true"></span>Adicionar à lista</button>
+                                <p class="disponibilidade-cd-pedido" id="disponibilidade-cd-item-pedido" aria-live="polite" hidden></p>
+                            </div>
                         </form>
 
                         <section class="carrinho-pedido">
@@ -864,6 +867,7 @@
                 <div class="acoes-formulario">
                     <button type="button" class="botao-secundario botao-cancelar-entrega" data-fechar-modal="modal-entrega">Cancelar</button>
                     <button type="submit" class="botao-principal botao-confirmar-entrega" id="botao-confirmar-data"><span class="icone icone-check" aria-hidden="true"></span><span class="rotulo-botao-confirmar-entrega">Aprovar envio</span></button>
+                    <button type="button" class="botao-producao-aprovacao" id="botao-aprovar-para-producao" hidden><span class="icone icone-check" aria-hidden="true"></span>Aprovar para produção</button>
                 </div>
             </form>
         </div>
