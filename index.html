@@ -271,8 +271,12 @@
                                 <button type="button" class="botao-secundario" id="botao-cadastrar-produto-xml" hidden>Cadastrar produto deste item</button>
                             </div>
 
-                            <label for="movimento-produto">Produto</label>
-                            <select id="movimento-produto" required></select>
+                            <label for="busca-movimento-produto">Produto</label>
+                            <div class="campo-busca-pedido campo-busca-movimento">
+                                <input type="search" id="busca-movimento-produto" placeholder="Digite o nome ou código do produto" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="opcoes-busca-movimento-produto" required>
+                                <div class="opcoes-busca-pedido" id="opcoes-busca-movimento-produto" role="listbox" hidden></div>
+                            </div>
+                            <select id="movimento-produto" hidden aria-hidden="true" tabindex="-1" required></select>
 
                             <div class="info-produto" id="info-produto-movimento">
                                 Selecione um produto para ver o estoque atual.
@@ -852,8 +856,8 @@
 
                 <p class="mensagem-formulario" id="mensagem-entrega" aria-live="polite"></p>
                 <div class="acoes-formulario">
-                    <button type="button" class="botao-secundario" data-fechar-modal="modal-entrega">Cancelar</button>
-                    <button type="submit" class="botao-principal" id="botao-confirmar-data">Aprovar envio</button>
+                    <button type="button" class="botao-secundario botao-cancelar-entrega" data-fechar-modal="modal-entrega">Cancelar</button>
+                    <button type="submit" class="botao-principal botao-confirmar-entrega" id="botao-confirmar-data"><span class="icone icone-check" aria-hidden="true"></span><span class="rotulo-botao-confirmar-entrega">Aprovar envio</span></button>
                 </div>
             </form>
         </div>
@@ -893,6 +897,20 @@
                     <button type="button" class="botao-secundario" data-fechar-modal="modal-recusar-item">Cancelar</button>
                     <button type="submit" class="botao-principal">Confirmar recusa</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-encerrar-saldo-item" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-encerrar-saldo-item">
+            <div class="modal-cabecalho"><div><p class="subtitulo-modal">Atendimento parcial</p><h2 id="titulo-modal-encerrar-saldo-item">Encerrar saldo restante</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-encerrar-saldo-item" aria-label="Fechar">×</button></div>
+            <form id="formulario-encerrar-saldo-item" class="formulario-modal">
+                <input type="hidden" id="encerrar-saldo-pedido-id"><input type="hidden" id="encerrar-saldo-produto-id">
+                <p class="texto-apoio" id="resumo-encerrar-saldo-item"></p>
+                <label for="motivo-encerrar-saldo-item">Motivo do encerramento</label>
+                <textarea id="motivo-encerrar-saldo-item" rows="4" maxlength="500" placeholder="Explique para a filial por que o saldo não será enviado." required></textarea>
+                <p class="mensagem-formulario" id="mensagem-encerrar-saldo-item" aria-live="polite"></p>
+                <div class="acoes-formulario acoes-encerrar-saldo"><button type="button" class="botao-secundario" data-fechar-modal="modal-encerrar-saldo-item">Voltar</button><button type="submit" class="botao-perigo botao-encerrar-saldo"><span class="icone icone-recusar" aria-hidden="true"></span>Encerrar saldo restante</button></div>
             </form>
         </div>
     </div>
@@ -949,8 +967,7 @@
                 <input type="hidden" id="remessa-pedido-id">
                 <p class="texto-apoio" id="remessa-resumo">Informe as quantidades que sairão nesta remessa.</p>
                 <div id="lista-itens-remessa" class="itens-pedido-resumo"></div>
-                <div class="data-entrega-grid">
-                    <label for="remessa-envio-previsto"><span>Previsão de envio</span><input type="date" id="remessa-envio-previsto"></label>
+                <div class="data-entrega-grid data-entrega-unica">
                     <label for="remessa-entrega-prevista"><span>Previsão de entrega</span><input type="date" id="remessa-entrega-prevista"></label>
                 </div>
                 <p class="mensagem-formulario" id="mensagem-remessa" aria-live="polite"></p>

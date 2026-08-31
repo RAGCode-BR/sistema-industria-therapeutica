@@ -1688,7 +1688,8 @@ tbody tr:last-child td {
 }
 
 .modal-conteudo-pequeno .acoes-formulario .botao-principal,
-.modal-conteudo-pequeno .acoes-formulario .botao-secundario {
+.modal-conteudo-pequeno .acoes-formulario .botao-secundario,
+.modal-conteudo-pequeno .acoes-formulario .botao-perigo {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1697,6 +1698,43 @@ tbody tr:last-child td {
     padding: 0 16px;
     border-radius: 9px;
     font-size: 13px;
+}
+
+.acoes-encerrar-saldo .botao-encerrar-saldo {
+    gap: 8px;
+    min-width: 190px;
+    color: var(--branco);
+    background: var(--vermelho);
+    border-color: var(--vermelho);
+    box-shadow: 0 8px 18px rgba(170, 77, 60, 0.24);
+    transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.acoes-encerrar-saldo .botao-encerrar-saldo:hover {
+    background: #913f31;
+    border-color: #913f31;
+    box-shadow: 0 11px 22px rgba(170, 77, 60, 0.32);
+    transform: translateY(-1px);
+}
+
+.acoes-encerrar-saldo .botao-encerrar-saldo:active {
+    transform: translateY(1px);
+}
+
+.acoes-encerrar-saldo .botao-encerrar-saldo .icone {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 520px) {
+    .acoes-encerrar-saldo {
+        flex-direction: column-reverse;
+    }
+
+    .acoes-encerrar-saldo .botao-secundario,
+    .acoes-encerrar-saldo .botao-encerrar-saldo {
+        width: 100%;
+    }
 }
 
 .modal-conteudo-pequeno .acoes-formulario .botao-secundario {
@@ -2528,6 +2566,20 @@ tbody tr:last-child td {
     border-color: var(--verde);
 }
 
+.acoes-item-detalhes .botao-acao.acao-perigo {
+    color: var(--vermelho);
+    background: #fff1ee;
+    border-color: #f0c9c1;
+}
+
+.acoes-item-detalhes .botao-acao.acao-perigo::before { content: "×"; }
+
+.acoes-item-detalhes .botao-acao.acao-perigo:hover {
+    color: var(--branco);
+    background: var(--vermelho);
+    border-color: var(--vermelho);
+}
+
 .acoes-item-detalhes .botao-producao-programada:disabled,
 .acoes-item-detalhes .botao-producao-programada:disabled:hover {
     color: var(--verde);
@@ -2615,8 +2667,48 @@ tbody tr:last-child td {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 40px;
-    padding: 9px 14px;
+    min-height: 44px;
+    margin-top: 0;
+    border-radius: 10px;
+    font-weight: 800;
+    transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.modal-entrega-conteudo .botao-cancelar-entrega {
+    min-width: 106px;
+    color: var(--marrom-claro);
+    background: transparent;
+}
+
+.modal-entrega-conteudo .botao-cancelar-entrega:hover {
+    color: var(--marrom);
+    background: var(--fundo);
+    border-color: #d9beb5;
+}
+
+.modal-entrega-conteudo .botao-confirmar-entrega {
+    min-width: 144px;
+    gap: 8px;
+    padding-inline: 18px;
+    box-shadow: 0 8px 18px rgba(201, 93, 73, 0.24);
+}
+
+.modal-entrega-conteudo .botao-confirmar-entrega:hover:not(:disabled) {
+    box-shadow: 0 12px 22px rgba(201, 93, 73, 0.3);
+    transform: translateY(-1px);
+}
+
+.modal-entrega-conteudo .botao-confirmar-entrega .icone {
+    width: 16px;
+    height: 16px;
+}
+
+.modal-entrega-conteudo .botao-confirmar-entrega:disabled {
+    cursor: not-allowed;
+    color: #9b8a84;
+    background: #eadeda;
+    border-color: #eadeda;
+    box-shadow: none;
 }
 
 .filial-card,
@@ -2686,6 +2778,14 @@ tbody tr:last-child td {
 
 .modal.modal-aberto {
     display: flex;
+}
+
+.modal.modal-sobreposta {
+    background: rgba(63, 48, 45, 0.52);
+}
+
+.modal.modal-sobreposta .modal-conteudo {
+    box-shadow: 0 28px 80px rgba(43, 27, 23, 0.46);
 }
 
 .modal-conteudo {
@@ -2808,6 +2908,14 @@ tbody tr:last-child td {
     background: var(--fundo);
     border: 1px solid var(--borda);
     border-radius: 14px;
+}
+
+.data-entrega-grid.data-entrega-unica {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.data-entrega-grid.data-entrega-unica label {
+    max-width: 250px;
 }
 
 .formulario-modal label[hidden] {

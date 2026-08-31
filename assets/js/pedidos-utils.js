@@ -22,17 +22,19 @@
                 .filter((registro) => registro.produtoId === produtoId)
                 .map((registro) => ({ ...registro, remessa })));
             const solicitado = quantidade(item.quantidadeSolicitada);
+            const encerrado = Math.min(quantidade(item.quantidadeEncerrada), solicitado);
+            const solicitadoParaAtendimento = Math.max(solicitado - encerrado, 0);
             const enviado = itensRemessa.reduce((total, registro) => total + quantidade(registro.quantidade), 0);
             const recebido = itensRemessa.filter((registro) => registro.remessa.situacao === "recebida")
                 .reduce((total, registro) => total + quantidade(registro.quantidade), 0);
             const emTransito = itensRemessa.filter((registro) => registro.remessa.situacao === "em_transito")
                 .reduce((total, registro) => total + quantidade(registro.quantidade), 0);
-            const pendente = Math.max(solicitado - enviado, 0);
+            const pendente = Math.max(solicitadoParaAtendimento - enviado, 0);
             return {
-                ...item, solicitado, enviado, recebido, emTransito, pendente,
+                ...item, solicitado, encerrado, solicitadoParaAtendimento, enviado, recebido, emTransito, pendente,
                 parcial: enviado > 0 && pendente > 0,
-                totalmenteEnviado: solicitado > 0 && pendente === 0,
-                totalmenteRecebido: solicitado > 0 && recebido >= solicitado
+                totalmenteEnviado: solicitadoParaAtendimento > 0 && pendente === 0,
+                totalmenteRecebido: solicitadoParaAtendimento > 0 && recebido >= solicitadoParaAtendimento
             };
         });
         const solicitado = itens.reduce((total, item) => total + item.solicitado, 0);

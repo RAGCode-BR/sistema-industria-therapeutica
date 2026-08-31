@@ -157,6 +157,8 @@ const elementos = {
     mensagemXml: document.querySelector("#mensagem-xml"),
     botaoCadastrarProdutoXml: document.querySelector("#botao-cadastrar-produto-xml"),
     movimentoProduto: document.querySelector("#movimento-produto"),
+    buscaMovimentoProduto: document.querySelector("#busca-movimento-produto"),
+    opcoesBuscaMovimentoProduto: document.querySelector("#opcoes-busca-movimento-produto"),
     movimentoQuantidade: document.querySelector("#movimento-quantidade"),
     campoMovimentoFilial: document.querySelector("#campo-movimento-filial"),
     movimentoFilial: document.querySelector("#movimento-filial"),
@@ -219,13 +221,19 @@ const elementos = {
     recusaProdutoId: document.querySelector("#recusa-produto-id"),
     motivoRecusarItem: document.querySelector("#motivo-recusar-item"),
     mensagemRecusarItem: document.querySelector("#mensagem-recusar-item"),
+    modalEncerrarSaldoItem: document.querySelector("#modal-encerrar-saldo-item"),
+    formularioEncerrarSaldoItem: document.querySelector("#formulario-encerrar-saldo-item"),
+    encerrarSaldoPedidoId: document.querySelector("#encerrar-saldo-pedido-id"),
+    encerrarSaldoProdutoId: document.querySelector("#encerrar-saldo-produto-id"),
+    resumoEncerrarSaldoItem: document.querySelector("#resumo-encerrar-saldo-item"),
+    motivoEncerrarSaldoItem: document.querySelector("#motivo-encerrar-saldo-item"),
+    mensagemEncerrarSaldoItem: document.querySelector("#mensagem-encerrar-saldo-item"),
     modalRemessa: document.querySelector("#modal-remessa"),
     formularioRemessa: document.querySelector("#formulario-remessa"),
     tituloModalRemessa: document.querySelector("#titulo-modal-remessa"),
     remessaPedidoId: document.querySelector("#remessa-pedido-id"),
     remessaResumo: document.querySelector("#remessa-resumo"),
     listaItensRemessa: document.querySelector("#lista-itens-remessa"),
-    remessaEnvioPrevisto: document.querySelector("#remessa-envio-previsto"),
     remessaEntregaPrevista: document.querySelector("#remessa-entrega-prevista"),
     mensagemRemessa: document.querySelector("#mensagem-remessa"),
     menuPerfil: document.querySelector("#menu-perfil"),
@@ -1013,6 +1021,17 @@ async function carregarDadosSupabase() {
     categoriasProdutos = categorias.data.map((categoria) => categoria.nome);
     unidadesMedida = unidades.data.map((unidade) => unidade.nome);
 
+    // Defesa adicional no cliente: além das políticas RLS, uma conta de filial
+    // só mantém em memória pedidos cujo vínculo é a sua própria filial.
+    const filialVinculada = String(perfilAtual?.filial_id || "").trim();
+    const pedidosVisiveis = usuarioEhCD()
+        ? pedidos.data
+        : pedidos.data.filter((pedido) => String(pedido.filial_id || "").trim() === filialVinculada);
+    const idsPedidosVisiveis = new Set(pedidosVisiveis.map((pedido) => pedido.id));
+    const remessasVisiveis = usuarioEhCD() ? remessas.data : remessas.data.filter((remessa) => idsPedidosVisiveis.has(remessa.pedido_id));
+    const eventosVisiveis = usuarioEhCD() ? eventosPedido.data : eventosPedido.data.filter((evento) => idsPedidosVisiveis.has(evento.pedido_id));
+    const reservasVisiveis = usuarioEhCD() ? reservasProducao.data : reservasProducao.data.filter((reserva) => idsPedidosVisiveis.has(reserva.pedido_id));
+
     // O Supabase é a fonte de dados do sistema autenticado. Um banco vazio é
     // um estado válido — por exemplo, após reiniciar o catálogo — e nunca deve
     // ser preenchido novamente com um cache antigo deste navegador.
@@ -1022,11 +1041,11 @@ async function carregarDadosSupabase() {
         ...estadoPadrao(),
         produtos: [...produtosPorId.values()],
         filiais: ordenarFiliais(filiais.data.map((filial) => normalizarFilial({ id: filial.id, nome: filial.nome, cidade: filial.cidade }))),
-        pedidos: pedidos.data.map((pedido) => ({
+        pedidos: pedidosVisiveis.map((pedido) => ({
             id: pedido.id, numeroPedido: pedido.numero_pedido, filialId: pedido.filial_id,
             itens: pedido.itens.map((item) => {
                 const produto = produtosPorId.get(item.produto_id);
-                return { produtoId: item.produto_id, produtoNome: produto?.nome || "Produto nao identificado", unidade: produto?.unidade || "Unidade", estoqueInformado: item.estoque_informado, quantidadeSolicitada: item.quantidade_solicitada, quantidadeEnviada: item.quantidade_enviada || null, observacao: item.observacao, situacao: item.situacao || pedido.situacao, producaoPrevista: item.producao_prevista || "", observacaoMatriz: item.observacao_matriz || "", recebidoEm: item.recebido_em || null };
+                return { produtoId: item.produto_id, produtoNome: produto?.nome || "Produto nao identificado", unidade: produto?.unidade || "Unidade", estoqueInformado: item.estoque_informado, quantidadeSolicitada: item.quantidade_solicitada, quantidadeEnviada: item.quantidade_enviada || null, quantidadeEncerrada: item.quantidade_encerrada || 0, motivoEncerramento: item.motivo_encerramento || "", observacao: item.observacao, situacao: item.situacao || pedido.situacao, producaoPrevista: item.producao_prevista || "", observacaoMatriz: item.observacao_matriz || "", recebidoEm: item.recebido_em || null };
             }),
             observacao: pedido.observacao, observacaoMatriz: pedido.observacao_matriz, situacao: pedido.situacao,
             producaoPrevista: pedido.producao_prevista || "", producaoIniciadaEm: pedido.producao_iniciada_em || null, envioPrevisto: pedido.envio_previsto || "", enviadoEm: pedido.enviado_em || null,
@@ -1038,9 +1057,9 @@ async function carregarDadosSupabase() {
             const produto = produtosPorId.get(movimentacao.produto_id);
             return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", criadoEm: movimentacao.criado_em };
         }),
-        remessas: remessas.data.map(normalizarRemessa),
-        reservasProducao: reservasProducao.data.map(normalizarReservaProducao),
-        eventosPedido: eventosPedido.data.map((evento) => ({ id: evento.id, pedidoId: evento.pedido_id, remessaId: evento.remessa_id, tipo: evento.tipo, dados: evento.dados || {}, criadoEm: evento.criado_em }))
+        remessas: remessasVisiveis.map(normalizarRemessa),
+        reservasProducao: reservasVisiveis.map(normalizarReservaProducao),
+        eventosPedido: eventosVisiveis.map((evento) => ({ id: evento.id, pedidoId: evento.pedido_id, remessaId: evento.remessa_id, tipo: evento.tipo, dados: evento.dados || {}, criadoEm: evento.criado_em }))
     };
     idsPedidosRemotos = new Set(estado.pedidos.map((pedido) => pedido.id));
     estadoSincronizado = JSON.parse(JSON.stringify(estado));
@@ -1124,11 +1143,21 @@ function filialAtual() {
 }
 
 function usuarioEhFilialDestinataria(pedido) {
-    return perfilAtual?.papel === "filial" && perfilAtual.filial_id === pedido?.filialId;
+    // A confirmação pertence à filial realmente vinculada ao usuário. Normalizar
+    // os identificadores evita ocultar o botão por diferenças de tipo no retorno do banco.
+    const filialDoUsuario = perfilAtual?.filial_id || filialAtual()?.id;
+    return !usuarioEhCD()
+        && Boolean(filialDoUsuario)
+        && String(filialDoUsuario).trim() === String(pedido?.filialId || "").trim();
 }
 
 function podeConfirmarRecebimento(pedido) {
-    return usuarioEhFilialDestinataria(pedido);
+    // A ação acompanha o portal da filial destinatária. Assim, uma conta da
+    // filial confirma normalmente e o administrador pode testar/operar essa
+    // mesma filial sem exibir o botão no portal do CD.
+    const filial = filialAtual();
+    return Boolean(filial)
+        && String(filial.id).trim() === String(pedido?.filialId || "").trim();
 }
 
 function itensDoPedido(pedido) {
@@ -1289,12 +1318,18 @@ function notificar(mensagem, tipo = "sucesso") {
 }
 
 function abrirModal(modal) {
+    const modaisAbertos = [...document.querySelectorAll(".modal.modal-aberto")]
+        .filter((item) => item !== modal);
+    modal.style.zIndex = String(100 + (modaisAbertos.length * 10));
+    modal.classList.toggle("modal-sobreposta", modaisAbertos.length > 0);
     modal.classList.add("modal-aberto");
     modal.setAttribute("aria-hidden", "false");
 }
 
 function fecharModal(modal) {
     modal.classList.remove("modal-aberto");
+    modal.classList.remove("modal-sobreposta");
+    modal.style.removeProperty("z-index");
     modal.setAttribute("aria-hidden", "true");
 }
 
@@ -1364,6 +1399,8 @@ function atualizarSelecaoProdutoXml() {
     elementos.movimentoProduto.title = bloquear
         ? "Produto identificado automaticamente pelo XML."
         : "";
+    elementos.buscaMovimentoProduto.disabled = bloquear || produtosAtivos().length === 0;
+    elementos.buscaMovimentoProduto.title = elementos.movimentoProduto.title;
 }
 
 function atualizarBotaoCadastrarProdutoXml() {
@@ -1388,6 +1425,7 @@ function preencherItemXmlMovimentacao(indice) {
     const produto = encontrarProdutoDoXml(item);
     produtoSelecionadoMovimentacao = produto?.id || "";
     elementos.movimentoProduto.value = produtoSelecionadoMovimentacao;
+    sincronizarBuscaMovimentoComProduto();
     atualizarSelecaoProdutoXml();
     elementos.movimentoQuantidade.value = Number.isInteger(item.quantidade) && item.quantidade > 0 ? String(item.quantidade) : "";
     elementos.movimentoObservacao.value = item.observacao;
@@ -1414,6 +1452,7 @@ function limparImportacaoXml(limparCampos = true) {
     if (limparCampos) {
         produtoSelecionadoMovimentacao = "";
         elementos.movimentoProduto.value = "";
+        sincronizarBuscaMovimentoComProduto();
         elementos.movimentoQuantidade.value = "";
         elementos.movimentoObservacao.value = "";
         atualizarInformacaoProdutoMovimento();
@@ -1511,6 +1550,7 @@ function avancarItemXmlAposEntrada() {
 
     produtoSelecionadoMovimentacao = "";
     elementos.movimentoProduto.value = "";
+    sincronizarBuscaMovimentoComProduto();
     elementos.movimentoQuantidade.value = "";
     elementos.movimentoObservacao.value = "";
     atualizarInformacaoProdutoMovimento();
@@ -1779,6 +1819,7 @@ function renderizarFormularioMovimentacao() {
     }
 
     elementos.movimentoProduto.disabled = ativos.length === 0;
+    elementos.buscaMovimentoProduto.disabled = ativos.length === 0;
     elementos.botaoConfirmarMovimento.disabled = ativos.length === 0;
     elementos.movimentoFilial.innerHTML = `<option value="">Saída do CD</option>${estado.filiais.map((filial) => `
         <option value="${filial.id}">${escaparHTML(filial.nome)} · ${escaparHTML(filial.cidade)}</option>
@@ -1786,7 +1827,58 @@ function renderizarFormularioMovimentacao() {
     if (buscarFilial(filialSelecionada)) {
         elementos.movimentoFilial.value = filialSelecionada;
     }
+    sincronizarBuscaMovimentoComProduto();
+    renderizarSugestoesBuscaMovimento();
+    atualizarSelecaoProdutoXml();
     atualizarInformacaoProdutoMovimento();
+}
+
+function textoProdutoParaBuscaMovimento(produto) {
+    return `${produto.codigo ? `${produto.codigo} · ` : ""}${produto.nome}`;
+}
+
+function sincronizarBuscaMovimentoComProduto() {
+    const produto = buscarProduto(elementos.movimentoProduto.value);
+    elementos.buscaMovimentoProduto.value = produto ? textoProdutoParaBuscaMovimento(produto) : "";
+}
+
+function produtosDaBuscaMovimento() {
+    const busca = textoNormalizado(elementos.buscaMovimentoProduto.value);
+    return produtosAtivos()
+        .filter((produto) => !busca || textoNormalizado(`${produto.codigo} ${produto.nome}`).includes(busca))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+function renderizarSugestoesBuscaMovimento(mostrar = document.activeElement === elementos.buscaMovimentoProduto) {
+    const produtos = produtosDaBuscaMovimento();
+    elementos.opcoesBuscaMovimentoProduto.innerHTML = produtos.length
+        ? produtos.map((produto) => `<button type="button" role="option" class="opcao-busca-pedido" data-produto-id="${produto.id}" aria-selected="${produto.id === elementos.movimentoProduto.value}"><span>${escaparHTML(produto.codigo || "Sem código")}</span><strong>${escaparHTML(produto.nome)}</strong><small>${escaparHTML(produto.categoria)} · ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</small></button>`).join("")
+        : `<p class="opcoes-busca-vazia">Nenhum produto encontrado.</p>`;
+    elementos.opcoesBuscaMovimentoProduto.hidden = !mostrar;
+    elementos.buscaMovimentoProduto.setAttribute("aria-expanded", String(mostrar));
+}
+
+function selecionarProdutoDaBuscaMovimento(produtoId) {
+    const produto = buscarProduto(produtoId);
+    if (!produto) return;
+    produtoSelecionadoMovimentacao = produto.id;
+    elementos.movimentoProduto.value = produto.id;
+    sincronizarBuscaMovimentoComProduto();
+    elementos.opcoesBuscaMovimentoProduto.hidden = true;
+    elementos.buscaMovimentoProduto.setAttribute("aria-expanded", "false");
+    atualizarInformacaoProdutoMovimento();
+    atualizarBotaoCadastrarProdutoXml();
+}
+
+function selecionarProdutoMovimentoPorBusca() {
+    const busca = elementos.buscaMovimentoProduto.value.trim().toLocaleLowerCase("pt-BR");
+    if (!busca) return null;
+    const produto = produtosAtivos().find((item) => {
+        const opcao = textoProdutoParaBuscaMovimento(item).toLocaleLowerCase("pt-BR");
+        return opcao === busca || item.codigo.toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca;
+    });
+    if (produto) selecionarProdutoDaBuscaMovimento(produto.id);
+    return produto;
 }
 
 function atualizarInformacaoProdutoMovimento() {
@@ -1869,6 +1961,8 @@ function resumoQuantidadesItemPedido(pedido, item, opcoes = {}) {
         ${mostrarDisponivelCD ? `<span class="quantidade-resumo disponivel"><small>Disponível CD</small><strong>${quantidade(disponivel)}</strong></span>` : ""}
         <span class="quantidade-resumo enviado"><small>Enviado</small><strong>${quantidade(enviado)}</strong></span>
         <span class="quantidade-resumo pendente"><small>Falta enviar</small><strong>${quantidade(pendente)}</strong></span>
+        ${(atendimento?.encerrado || 0) > 0 ? `<span class="quantidade-resumo pendente"><small>Saldo encerrado</small><strong>${quantidade(atendimento.encerrado)}</strong></span>` : ""}
+        ${(atendimento?.encerrado || 0) > 0 && item.motivoEncerramento ? `<span class="quantidade-resumo observacao-matriz"><small>Motivo do saldo encerrado</small><strong>${escaparHTML(item.motivoEncerramento)}</strong></span>` : ""}
         ${quantidadeProducao > 0 ? `<span class="quantidade-resumo producao ${producaoProgramada ? "producao-programada" : ""}"><small>${producaoProgramada ? "Em produção" : "A produzir"}</small><strong>${quantidade(quantidadeProducao)}</strong>${item.producaoPrevista ? `<em>Prev.: ${formatarDataSimples(item.producaoPrevista)}</em>` : ""}</span>` : ""}
     </div>`;
 }
@@ -2915,6 +3009,15 @@ function preencherSeletoresEntrega(dataBase = new Date()) {
     elementos.entregaAno.value = String(anoAtual);
 }
 
+function definirTextoBotaoConfirmarEntrega(texto) {
+    const rotulo = elementos.botaoConfirmarData.querySelector(".rotulo-botao-confirmar-entrega");
+    if (rotulo) {
+        rotulo.textContent = texto;
+        return;
+    }
+    elementos.botaoConfirmarData.textContent = texto;
+}
+
 function configurarModalDataPedido(pedido, modo, produtoId = "") {
     if (!pedido) return;
     const filial = buscarFilial(pedido.filialId);
@@ -2952,7 +3055,8 @@ function configurarModalDataPedido(pedido, modo, produtoId = "") {
     elementos.entregaModo.value = modo;
     elementos.tituloModalEntrega.textContent = textos.titulo;
     elementos.entregaResumo.textContent = textos.resumo;
-    elementos.botaoConfirmarData.textContent = textos.botao;
+    definirTextoBotaoConfirmarEntrega(textos.botao);
+    elementos.botaoConfirmarData.disabled = false;
     elementos.mensagemEntrega.textContent = "";
 
     const itemUnico = modo === "entrega" && itens.length === 1;
@@ -2982,20 +3086,25 @@ function abrirModalEntrega(pedidoId) {
     const item = itens[0];
     const produto = buscarProduto(item.produtoId);
     const estoqueNoCD = numeroInteiroNaoNegativo(produto?.quantidade);
-    const maximo = item.quantidadeSolicitada;
+    // A aprovação representa a quantidade que já pode ser atendida pelo CD.
+    // Nunca permita aprovar mais do que o saldo físico disponível agora.
+    const maximo = Math.min(item.quantidadeSolicitada, estoqueNoCD);
     elementos.formularioEntrega.reset();
     elementos.entregaPedidoId.value = pedido.id;
     elementos.entregaModo.value = "aprovar_item";
     elementos.tituloModalEntrega.textContent = "Quantidade a enviar";
     elementos.entregaResumo.textContent = `Informe a quantidade de ${item.produtoNome} que sera enviada.`;
-    elementos.botaoConfirmarData.textContent = "Aprovar item";
-    elementos.mensagemEntrega.textContent = "";
+    definirTextoBotaoConfirmarEntrega("Aprovar item");
+    elementos.botaoConfirmarData.disabled = maximo === 0;
+    elementos.mensagemEntrega.textContent = maximo === 0
+        ? "Não há estoque disponível no CD para aprovar este item. Faça a entrada ou programe a produção antes de aprová-lo."
+        : "";
     elementos.campoEntregaQuantidade.hidden = false;
-    elementos.entregaQuantidade.required = true;
-    elementos.entregaQuantidade.disabled = false;
+    elementos.entregaQuantidade.required = maximo > 0;
+    elementos.entregaQuantidade.disabled = maximo === 0;
     elementos.entregaQuantidade.min = "1";
     elementos.entregaQuantidade.max = String(maximo);
-    elementos.entregaQuantidade.value = String(maximo);
+    elementos.entregaQuantidade.value = maximo > 0 ? String(maximo) : "";
     elementos.ajudaEntregaQuantidade.innerHTML = `Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}.<br>Disponível no CD: ${formatarNumero(estoqueNoCD)} ${escaparHTML(item.unidade)}.`;
     elementos.campoEntregaData.hidden = true;
     [elementos.entregaDia, elementos.entregaMes, elementos.entregaAno].forEach((campo) => {
@@ -3003,7 +3112,7 @@ function abrirModalEntrega(pedidoId) {
         campo.required = false;
     });
     abrirModal(elementos.modalEntrega);
-    setTimeout(() => elementos.entregaQuantidade.focus(), 0);
+    if (maximo > 0) setTimeout(() => elementos.entregaQuantidade.focus(), 0);
 }
 
 function arquivarProduto(produtoId) {
@@ -3087,9 +3196,12 @@ async function aprovarItemPedido(pedidoId, quantidadeSelecionada) {
     const item = itensEmAcao(pedido || {}).find((registro) => (registro.situacao || pedido?.situacao) === "pendente");
     const produto = item && buscarProduto(item.produtoId);
     const quantidade = Number(quantidadeSelecionada);
+    const maximoDisponivel = Math.min(item?.quantidadeSolicitada || 0, numeroInteiroNaoNegativo(produto?.quantidade));
 
-    if (!pedido || !item || !produto || !produto.ativo || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > item.quantidadeSolicitada) {
-        elementos.mensagemEntrega.textContent = "Informe uma quantidade entre 1 e o total solicitado.";
+    if (!pedido || !item || !produto || !produto.ativo || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > maximoDisponivel) {
+        elementos.mensagemEntrega.textContent = maximoDisponivel > 0
+            ? `Informe uma quantidade entre 1 e ${formatarNumero(maximoDisponivel)}, conforme o estoque disponível no CD.`
+            : "Não há estoque disponível no CD para aprovar este item.";
         return;
     }
 
@@ -3196,7 +3308,7 @@ async function criarRemessaDoFormulario() {
     const { error } = await clienteSupabase.rpc("criar_remessa", {
         p_pedido_id: pedido.id,
         p_itens: itens,
-        p_envio_previsto: elementos.remessaEnvioPrevisto.value || null,
+        p_envio_previsto: null,
         p_entrega_prevista: elementos.remessaEntregaPrevista.value || null
     });
     if (error) {
@@ -3446,6 +3558,7 @@ function abrirModalDetalhesPedido(pedidoId) {
         const atendimentoItem = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens.find((registro) => registro.produtoId === item.produtoId);
         const foiEnviado = (atendimentoItem?.enviado || 0) > 0;
         const quantidadePendente = atendimentoItem?.pendente || 0;
+        const saldoEncerrado = atendimentoItem?.encerrado || 0;
         const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
         const envioParcial = foiEnviado && quantidadePendente > 0;
         const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && situacao !== "recusado" && quantidadePendente > disponibilidade;
@@ -3454,6 +3567,9 @@ function abrirModalDetalhesPedido(pedidoId) {
             ? producaoProgramada
                 ? `<button type="button" class="botao-acao botao-producao-programada" disabled>Produção programada<br><small>Prevista para ${formatarDataSimples(item.producaoPrevista)}</small></button>`
                 : `<button type="button" class="botao-acao acao-aprovar" data-acao="iniciar-producao-item" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Programar produção<br><small>Faltam ${formatarNumero(quantidadePendente - disponibilidade)}</small></button>`
+            : "";
+        const acaoEncerrarSaldo = usuarioEhCD() && !estaNoPortalFilial() && foiEnviado && quantidadePendente > 0
+            ? `<button type="button" class="botao-acao acao-perigo" data-acao="encerrar-saldo-item" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Encerrar saldo restante<br><small>Faltam ${formatarNumero(quantidadePendente)}</small></button>`
             : "";
         const confirmadoEm = atendimentoItem?.totalmenteRecebido ? (atendimentoItem.recebidoEm || pedido.recebidoEm) : null;
         const descricao = foiEnviado
@@ -3473,8 +3589,10 @@ function abrirModalDetalhesPedido(pedidoId) {
                 </div>
                 <div class="acoes-item-detalhes">
                     <span class="selo-tipo ${foiEnviado ? "tipo-aprovado" : classeSituacaoPedido(situacao)}">${envioParcial ? "Envio parcial" : foiEnviado ? "Enviado" : "Não enviado"}</span>
+                    ${saldoEncerrado > 0 ? `<span class="data-recebimento-item">Atendido parcialmente</span>` : ""}
                     ${confirmadoEm ? `<span class="data-recebimento-item">Confirmado em<br>${formatarData(confirmadoEm)}</span>` : ""}
                     ${acaoProducao}
+                    ${acaoEncerrarSaldo}
                 </div>
             </article>
         `;
@@ -3761,6 +3879,38 @@ async function recusarItemPedido(pedidoId, produtoId, motivo) {
     notificar("Item recusado.");
 }
 
+function abrirModalEncerrarSaldoItem(pedidoId, produtoId) {
+    const pedido = estado.pedidos.find((registro) => registro.id === pedidoId);
+    const item = pedido && itensDoPedido(pedido).find((registro) => registro.produtoId === produtoId);
+    const atendimento = pedido && window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens.find((registro) => registro.produtoId === produtoId);
+    const saldo = atendimento?.pendente || 0;
+    if (!pedido || !item || (atendimento?.enviado || 0) === 0 || saldo === 0 || !usuarioEhCD()) {
+        notificar("Este item não possui saldo enviado parcialmente disponível para encerramento.", "erro");
+        return;
+    }
+    elementos.formularioEncerrarSaldoItem.reset();
+    elementos.encerrarSaldoPedidoId.value = pedido.id;
+    elementos.encerrarSaldoProdutoId.value = item.produtoId;
+    elementos.resumoEncerrarSaldoItem.textContent = `Serão mantidas as ${formatarNumero(atendimento.enviado)} ${item.unidade}(s) já enviadas. O saldo de ${formatarNumero(saldo)} ${item.unidade}(s) não será produzido nem enviado para a filial.`;
+    elementos.mensagemEncerrarSaldoItem.textContent = "";
+    abrirModal(elementos.modalEncerrarSaldoItem);
+    setTimeout(() => elementos.motivoEncerrarSaldoItem.focus(), 0);
+}
+
+async function encerrarSaldoItemPedido(pedidoId, produtoId, motivo) {
+    if (!clienteSupabase || !usuarioEhCD()) return;
+    const { error } = await clienteSupabase.rpc("encerrar_saldo_item_pedido", { p_pedido_id: pedidoId, p_produto_id: produtoId, p_motivo: motivo });
+    if (error) {
+        console.error(error);
+        elementos.mensagemEncerrarSaldoItem.textContent = error.message || "Não foi possível encerrar o saldo deste item.";
+        return;
+    }
+    fecharModal(elementos.modalEncerrarSaldoItem);
+    await carregarDadosSupabase();
+    abrirModalDetalhesPedido(pedidoId);
+    notificar("Saldo restante encerrado. As unidades já enviadas foram preservadas.");
+}
+
 function exportarBackup() {
     const backup = {
         ...estado,
@@ -3947,6 +4097,9 @@ function lidarComAcao(acao, elemento) {
         case "cancelar-remessa":
             cancelarRemessa(elemento.dataset.remessaId, elemento.dataset.pedidoId);
             break;
+        case "encerrar-saldo-item":
+            abrirModalEncerrarSaldoItem(elemento.dataset.pedidoId, elemento.dataset.produtoId);
+            break;
         case "ver-detalhes-pedido":
             abrirModalDetalhesPedido(elemento.dataset.pedidoId);
             break;
@@ -4064,7 +4217,7 @@ document.addEventListener("click", (evento) => {
     if (!evento.target.closest(".menu-lateral") && !evento.target.closest("#botao-menu-mobile")) fecharMenuMobile();
 });
 
-[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRecusarItem, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido].forEach((modal) => {
+[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRecusarItem, elementos.modalEncerrarSaldoItem, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido].forEach((modal) => {
     modal.addEventListener("click", (evento) => {
         if (evento.target === modal) fecharModal(modal);
     });
@@ -4080,6 +4233,7 @@ document.addEventListener("keydown", (evento) => {
         fecharModal(elementos.modalEntrega);
         fecharModal(elementos.modalAnalisarPedido);
         fecharModal(elementos.modalRecusarItem);
+        fecharModal(elementos.modalEncerrarSaldoItem);
         fecharModal(elementos.modalRemessa);
         fecharModal(elementos.modalUsuario);
         fecharModal(elementos.modalAlterarSenha);
@@ -4129,8 +4283,36 @@ elementos.filtroStatusItensPedidos.addEventListener("change", renderizarPedidos)
 elementos.filtroStatusMeusPedidos.addEventListener("change", renderizarPortalFilial);
 elementos.movimentoProduto.addEventListener("change", () => {
     produtoSelecionadoMovimentacao = elementos.movimentoProduto.value;
+    sincronizarBuscaMovimentoComProduto();
     atualizarInformacaoProdutoMovimento();
     atualizarBotaoCadastrarProdutoXml();
+});
+elementos.buscaMovimentoProduto.addEventListener("focus", () => renderizarSugestoesBuscaMovimento(true));
+elementos.buscaMovimentoProduto.addEventListener("input", () => {
+    selecionarProdutoMovimentoPorBusca();
+    renderizarSugestoesBuscaMovimento(true);
+});
+elementos.buscaMovimentoProduto.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter") {
+        const produto = selecionarProdutoMovimentoPorBusca();
+        if (produto) {
+            evento.preventDefault();
+            selecionarProdutoDaBuscaMovimento(produto.id);
+        }
+    }
+    if (evento.key === "Escape") {
+        elementos.opcoesBuscaMovimentoProduto.hidden = true;
+        elementos.buscaMovimentoProduto.setAttribute("aria-expanded", "false");
+    }
+});
+elementos.opcoesBuscaMovimentoProduto.addEventListener("click", (evento) => {
+    const opcao = evento.target.closest("[data-produto-id]");
+    if (opcao) selecionarProdutoDaBuscaMovimento(opcao.dataset.produtoId);
+});
+document.addEventListener("pointerdown", (evento) => {
+    if (evento.target.closest(".campo-busca-movimento")) return;
+    elementos.opcoesBuscaMovimentoProduto.hidden = true;
+    elementos.buscaMovimentoProduto.setAttribute("aria-expanded", "false");
 });
 elementos.acertoProduto.addEventListener("change", atualizarInformacaoProdutoAcerto);
 elementos.movimentoXml.addEventListener("change", importarXmlMovimentacao);
@@ -4457,6 +4639,18 @@ elementos.formularioRecusarItem.addEventListener("submit", (evento) => {
     recusarItemPedido(elementos.recusaPedidoId.value, elementos.recusaProdutoId.value, motivo);
 });
 
+elementos.formularioEncerrarSaldoItem.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    const motivo = elementos.motivoEncerrarSaldoItem.value.trim();
+    elementos.mensagemEncerrarSaldoItem.textContent = "";
+    if (!motivo) {
+        elementos.mensagemEncerrarSaldoItem.textContent = "Informe o motivo do encerramento para continuar.";
+        elementos.motivoEncerrarSaldoItem.focus();
+        return;
+    }
+    encerrarSaldoItemPedido(elementos.encerrarSaldoPedidoId.value, elementos.encerrarSaldoProdutoId.value, motivo);
+});
+
 elementos.formularioRemessa.addEventListener("submit", (evento) => {
     evento.preventDefault();
     criarRemessaDoFormulario();
@@ -4545,6 +4739,11 @@ elementos.botaoEnviarPedidoLista.addEventListener("click", async () => {
 
     if (!filial) {
         elementos.mensagemPedidoFilial.textContent = "Selecione uma filial antes de enviar o pedido.";
+        return;
+    }
+
+    if (!usuarioEhCD() && String(filial.id) !== String(perfilAtual?.filial_id || "")) {
+        elementos.mensagemPedidoFilial.textContent = "Sua sessão não está vinculada a esta filial. Atualize a página ou entre com a conta correta.";
         return;
     }
 
