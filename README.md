@@ -1,52 +1,92 @@
-# Estoque Therapeutica
+# Sistema de Estoque — Therapeutica
 
-## Acesso e Supabase
+Sistema web para controle do estoque do Centro de Distribuição (CD), pedidos das filiais, produção interna e expedição de remessas.
 
-- O acesso é feito com e-mail e senha pelo Supabase Auth.
-- Antes de abrir o sistema, execute `node scripts/gerar-config.js` para gerar `assets/js/env.js` a partir de `.env.local`.
-- Execute `supabase/supabase-schema.sql`, `supabase/usuarios-auth.sql`, `supabase/usuarios-admin.sql`, `supabase/concorrencia.sql` e `supabase/pedido-itens-status.sql`, nessa ordem, no SQL Editor.
-- Para habilitar senhas temporárias, aplique `supabase/migrations/20260825090000_senhas_temporarias.sql` no SQL Editor e publique as funções `redefinir-senha-temporaria` e `concluir-senha-temporaria` (`supabase functions deploy <nome-da-função>`).
-- Cadastros novos entram como usuários de filial. Promova o primeiro administrador usando o comando comentado em `usuarios-auth.sql`.
-- O banco usa Row Level Security: filiais veem somente seu estoque e pedidos; administradores do CD administram o estoque global.
+## Principais recursos
 
-Protótipo de controle do Centro de Distribuição (CD) da Therapeutica, criado com HTML, CSS e JavaScript puro.
+- Cadastro de produtos com código, descrição, categoria, unidade e estoque mínimo.
+- Categorias e unidades de medida administráveis pela interface.
+- Entradas, saídas, ajustes e histórico de movimentações do CD.
+- Pesquisa, ordenação alfabética, paginação e alertas de estoque baixo.
+- Estoque informado individualmente por filial.
+- Pedidos com vários produtos, número sequencial (`#1`, `#2`, ...), análise item a item e motivo de recusa.
+- Remessas parciais: o sistema mostra o já enviado, o saldo pendente e o que falta produzir.
+- Produção programada por produto, permitindo prazos diferentes dentro do mesmo pedido.
+- Reserva de saldo para pedidos em produção, evitando que outra solicitação use o estoque separado.
+- Confirmação de recebimento pela filial destinatária ou por um administrador do CD.
+- Pedido finalizado automaticamente quando todos os itens não recusados forem recebidos.
+- Relatórios e filtros para análise pendente, produção, envio parcial, trânsito, finalização e recusa.
 
-## O que funciona nesta versão
+## Fluxo operacional
 
-- Cadastro, edição e arquivamento de produtos;
-- Pesquisa e filtro por categoria;
-- Entrada e saída de produtos com bloqueio de estoque negativo;
-- Alertas automáticos de estoque baixo;
-- Histórico de movimentações com saldo antes e depois;
-- Portais de demonstração para Sorriso, Blumenau, Lucas e Sinop, além da visão do CD;
-- Estoque individual por filial;
-- Pedidos em lista: uma filial pode enviar vários produtos na mesma solicitação, com estoque atual obrigatório para cada item;
-- Aprovação, produção interna, envio ou recusa para pedidos;
-- Transferência aprovada baixa o estoque do CD e atualiza a quantidade conhecida da filial;
-- Backup e restauração dos dados em arquivo JSON.
+1. A filial cria um pedido e informa o estoque atual de cada produto.
+2. O CD aprova ou recusa cada item.
+3. Itens aprovados podem ser enviados imediatamente, em uma ou mais remessas.
+4. Quando faltar estoque, o CD programa a produção do produto específico e registra a entrada produzida no estoque.
+5. A filial destinatária — ou o administrador do CD — confirma o recebimento de cada remessa.
+6. Quando todo item aprovado tiver sido recebido, o pedido fica como **Finalizado**. Itens recusados não impedem essa finalização.
 
-## Como abrir
+## Tecnologias
 
-Abra o arquivo `index.html` em um navegador. Para o desenvolvimento, a extensão Live Server do VS Code deixa a atualização mais prática.
+- HTML, CSS e JavaScript puro.
+- Supabase Auth e PostgreSQL.
+- Row Level Security (RLS) para acesso por perfil e filial.
 
-## Limite desta fase
+## Configuração local
 
-Os dados ficam no navegador atual usando `localStorage`. O seletor de “Visualização” serve apenas para demonstrar os portais: ele não é um login e não protege os dados. Portanto, ainda não existem sincronização entre computadores, permissões reais nem banco de dados remoto.
+1. Instale as dependências:
 
-Na próxima fase, o frontend será conectado ao Supabase para:
+   ```bash
+   npm install
+   ```
 
-- autenticação do CD e das filiais;
-- banco PostgreSQL;
-- políticas de segurança por usuário/filial;
-- dados compartilhados entre dispositivos;
-- publicação segura no GitHub Pages.
+2. Crie `.env.local` a partir de `.env.example` e informe a URL e a chave pública do projeto Supabase.
+
+3. Gere a configuração do navegador:
+
+   ```bash
+   node scripts/gerar-config.js
+   ```
+
+4. Inicie o servidor local:
+
+   ```bash
+   npm run dev
+   ```
+
+O sistema será servido em `http://localhost:3000`.
+
+## Banco de dados e migrações
+
+O projeto Supabase deve estar vinculado antes de aplicar migrações:
+
+```bash
+supabase link --project-ref <seu-project-ref>
+supabase db push --linked
+```
+
+As migrações em `supabase/migrations/` são a fonte de verdade do fluxo de pedidos, remessas, reservas, confirmações e finalização. Não altere migrações já aplicadas; crie uma nova migração para cada mudança de banco.
+
+Os arquivos SQL em `supabase/` auxiliam a configuração inicial, importações e verificações operacionais.
+
+## Validação
+
+```bash
+npm run test:reports
+node --check assets/js/script.js
+supabase db push --linked --dry-run
+```
 
 ## Estrutura do projeto
 
 ```text
-estoque-therapeutica/
+├── assets/
+│   ├── css/
+│   └── js/
+├── scripts/
+├── supabase/
+│   └── migrations/
 ├── index.html
-├── style.css
-├── script.js
+├── login.html
 └── README.md
 ```

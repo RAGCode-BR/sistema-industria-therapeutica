@@ -45,6 +45,7 @@ const titulosPaginas = {
     dashboard: "Dashboard",
     produtos: "Produtos",
     movimentacao: "Movimentação",
+    "acerto-estoque": "Acerto de estoque",
     "estoque-baixo": "Estoque baixo",
     pedidos: "Pedidos",
     "portal-filial": "Portal da filial",
@@ -156,6 +157,13 @@ const elementos = {
     infoProdutoMovimento: document.querySelector("#info-produto-movimento"),
     mensagemMovimentacao: document.querySelector("#mensagem-movimentacao"),
     botaoConfirmarMovimento: document.querySelector("#botao-confirmar-movimento"),
+    formularioAcertoEstoque: document.querySelector("#formulario-acerto-estoque"),
+    acertoProduto: document.querySelector("#acerto-produto"),
+    acertoQuantidade: document.querySelector("#acerto-quantidade"),
+    acertoObservacao: document.querySelector("#acerto-observacao"),
+    infoProdutoAcerto: document.querySelector("#info-produto-acerto"),
+    mensagemAcertoEstoque: document.querySelector("#mensagem-acerto-estoque"),
+    botaoConfirmarAcerto: document.querySelector("#botao-confirmar-acerto"),
     modalProduto: document.querySelector("#modal-produto"),
     formularioProduto: document.querySelector("#formulario-produto"),
     tituloModalProduto: document.querySelector("#titulo-modal-produto"),
@@ -1787,6 +1795,37 @@ function atualizarInformacaoProdutoMovimento() {
     elementos.infoProdutoMovimento.innerHTML = `Estoque atual no CD: <strong>${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</strong>. Estoque mínimo: <strong>${formatarNumero(produto.estoqueMinimo)} ${escaparHTML(produto.unidade)}</strong>.`;
 }
 
+function renderizarFormularioAcertoEstoque() {
+    const ativos = produtosAtivos().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    const valorAtual = elementos.acertoProduto.value;
+
+    elementos.acertoProduto.innerHTML = ativos.length
+        ? `<option value="">Selecione um produto</option>${ativos.map((produto) => `
+            <option value="${produto.id}">${escaparHTML(produto.nome)} · ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</option>
+        `).join("")}`
+        : "<option value=\"\">Nenhum produto cadastrado</option>";
+
+    if (ativos.some((produto) => produto.id === valorAtual)) {
+        elementos.acertoProduto.value = valorAtual;
+    }
+
+    elementos.acertoProduto.disabled = ativos.length === 0;
+    elementos.botaoConfirmarAcerto.disabled = ativos.length === 0;
+    atualizarInformacaoProdutoAcerto();
+}
+
+function atualizarInformacaoProdutoAcerto() {
+    const produto = buscarProduto(elementos.acertoProduto.value);
+    if (!produto) {
+        elementos.infoProdutoAcerto.textContent = produtosAtivos().length
+            ? "Selecione um produto para conferir o saldo atual."
+            : "Cadastre um produto antes de realizar um acerto.";
+        return;
+    }
+
+    elementos.infoProdutoAcerto.innerHTML = `Saldo registrado no CD: <strong>${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</strong>. Estoque mínimo: <strong>${formatarNumero(produto.estoqueMinimo)} ${escaparHTML(produto.unidade)}</strong>.`;
+}
+
 function renderizarEstoqueBaixo() {
     const produtos = produtosComEstoqueBaixo().sort((a, b) => a.quantidade - b.quantidade || a.nome.localeCompare(b.nome, "pt-BR"));
 
@@ -2463,7 +2502,7 @@ function renderizarPortalFilial() {
 
     elementos.itemPedidoProduto.disabled = produtos.length === 0;
     elementos.buscaItemPedido.disabled = produtos.length === 0;
-    elementos.opcoesBuscaItemPedido.innerHTML = produtos.map((produto) => `<option value="${escaparHTML(`${produto.codigo ? `${produto.codigo} · ` : ""}${produto.nome}`)}"></option>`).join("");
+    renderizarSugestoesBuscaItemPedido();
     atualizarEstoqueAtualDoItemPedido();
     renderizarCarrinhoPedido();
 
@@ -2530,12 +2569,42 @@ function atualizarEstoqueAtualDoItemPedido() {
 
 function selecionarProdutoPedidoPorBusca() {
     const busca = elementos.buscaItemPedido.value.trim().toLocaleLowerCase("pt-BR");
-    if (!busca) return;
+    if (!busca) return null;
     const produto = produtosAtivos().find((item) => {
         const opcao = `${item.codigo ? `${item.codigo} · ` : ""}${item.nome}`.toLocaleLowerCase("pt-BR");
         return opcao === busca || item.codigo.toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca;
     });
-    if (produto) elementos.itemPedidoProduto.value = produto.id;
+    if (produto) {
+        elementos.itemPedidoProduto.value = produto.id;
+        atualizarEstoqueAtualDoItemPedido();
+    }
+    return produto;
+}
+
+function produtosDaBuscaDePedido() {
+    const busca = textoNormalizado(elementos.buscaItemPedido.value);
+    return produtosAtivos()
+        .filter((produto) => !busca || textoNormalizado(`${produto.codigo} ${produto.nome}`).includes(busca))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+function renderizarSugestoesBuscaItemPedido(mostrar = document.activeElement === elementos.buscaItemPedido) {
+    const produtos = produtosDaBuscaDePedido();
+    elementos.opcoesBuscaItemPedido.innerHTML = produtos.length
+        ? produtos.map((produto) => `<button type="button" role="option" class="opcao-busca-pedido" data-produto-id="${produto.id}" aria-selected="${produto.id === elementos.itemPedidoProduto.value}"><span>${escaparHTML(produto.codigo || "Sem código")}</span><strong>${escaparHTML(produto.nome)}</strong><small>${escaparHTML(produto.categoria)} · ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</small></button>`).join("")
+        : `<p class="opcoes-busca-vazia">Nenhum produto encontrado.</p>`;
+    elementos.opcoesBuscaItemPedido.hidden = !mostrar;
+    elementos.buscaItemPedido.setAttribute("aria-expanded", String(mostrar));
+}
+
+function selecionarProdutoDaBuscaPedido(produtoId) {
+    const produto = buscarProduto(produtoId);
+    if (!produto) return;
+    elementos.itemPedidoProduto.value = produto.id;
+    elementos.buscaItemPedido.value = `${produto.codigo ? `${produto.codigo} · ` : ""}${produto.nome}`;
+    elementos.opcoesBuscaItemPedido.hidden = true;
+    elementos.buscaItemPedido.setAttribute("aria-expanded", "false");
+    atualizarEstoqueAtualDoItemPedido();
 }
 
 function renderizarTudo() {
@@ -2548,6 +2617,7 @@ function renderizarTudo() {
     renderizarUnidadesConfiguracoes();
     renderizarProdutos();
     renderizarFormularioMovimentacao();
+    renderizarFormularioAcertoEstoque();
     renderizarEstoqueBaixo();
     renderizarPedidos();
     renderizarNotificacaoPedidos();
@@ -3231,6 +3301,12 @@ function abrirModalConfirmarRecebimento(pedidoId) {
     abrirModal(elementos.modalConfirmarRecebimento);
 }
 
+function renderizarItensDaRemessa(remessa) {
+    return `<div class="itens-remessa-detalhe">${remessa.itens.map((item) => `
+        <span><strong>${escaparHTML(buscarProduto(item.produtoId)?.nome || "Produto")}</strong><b>${formatarNumero(item.quantidade)}</b></span>
+    `).join("")}</div>`;
+}
+
 function abrirModalDetalhesPedido(pedidoId) {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     const filial = filialAtual();
@@ -3247,6 +3323,12 @@ function abrirModalDetalhesPedido(pedidoId) {
         const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
         const envioParcial = foiEnviado && quantidadePendente > 0;
         const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && situacao !== "recusado" && quantidadePendente > disponibilidade;
+        const producaoProgramada = Boolean(item.producaoPrevista) && quantidadePendente > 0;
+        const acaoProducao = (precisaProducao || producaoProgramada)
+            ? producaoProgramada
+                ? `<button type="button" class="botao-acao botao-producao-programada" disabled>Produção programada<br><small>Prevista para ${formatarDataSimples(item.producaoPrevista)}</small></button>`
+                : `<button type="button" class="botao-acao acao-aprovar" data-acao="iniciar-producao-item" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Programar produção<br><small>Faltam ${formatarNumero(quantidadePendente - disponibilidade)}</small></button>`
+            : "";
         const confirmadoEm = atendimentoItem?.totalmenteRecebido ? (atendimentoItem.recebidoEm || pedido.recebidoEm) : null;
         const descricao = foiEnviado
             ? situacao === "recebido" ? "Recebido pela filial." : "Enviado pelo CD e aguardando confirmação."
@@ -3267,7 +3349,7 @@ function abrirModalDetalhesPedido(pedidoId) {
                 <div class="acoes-item-detalhes">
                     <span class="selo-tipo ${foiEnviado ? "tipo-aprovado" : classeSituacaoPedido(situacao)}">${envioParcial ? "Envio parcial" : foiEnviado ? "Enviado" : "Não enviado"}</span>
                     ${confirmadoEm ? `<span class="data-recebimento-item">Confirmado em<br>${formatarData(confirmadoEm)}</span>` : ""}
-                    ${precisaProducao ? `<button type="button" class="botao-acao acao-aprovar" data-acao="iniciar-producao-item" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}">Programar produção<br><small>Faltam ${formatarNumero(quantidadePendente - disponibilidade)}</small></button>` : ""}
+                    ${acaoProducao}
                 </div>
             </article>
         `;
@@ -3275,10 +3357,10 @@ function abrirModalDetalhesPedido(pedidoId) {
     const remessas = [...window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).remessas]
         .sort((a, b) => new Date(a.enviadaEm || 0) - new Date(b.enviadaEm || 0));
     if (remessas.length) {
-        elementos.listaDetalhesPedido.innerHTML = `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Remessas <span>${remessas.length}</span></h4><div class="lista-itens-categoria">${remessas.map((remessa, indice) => `<article class="item-pedido-resumo"><strong>Remessa ${indice + 1} · ${remessa.situacao === "recebida" ? "Recebida" : remessa.situacao === "cancelada" ? "Cancelada" : "Em trânsito"}</strong><span>${remessa.itens.map((item) => `${buscarProduto(item.produtoId)?.nome || "Produto"}: ${formatarNumero(item.quantidade)}`).join(" · ")}</span><span>Enviada em ${formatarData(remessa.enviadaEm)}${remessa.recebidaEm ? ` · Recebida em ${formatarData(remessa.recebidaEm)}` : ""}</span>${remessa.situacao === "em_transito" ? `${usuarioEhCD() && !estaNoPortalFilial() ? `<button type="button" class="botao-acao acao-perigo" data-acao="cancelar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}">Cancelar remessa</button>` : ""}${podeConfirmarRecebimento(pedido) ? `<button type="button" class="botao-acao acao-aprovar" data-acao="confirmar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}"><span class="icone icone-check" aria-hidden="true"></span>Confirmar recebimento</button>` : ""}` : ""}</article>`).join("")}</div></section>` + elementos.listaDetalhesPedido.innerHTML;
+        elementos.listaDetalhesPedido.innerHTML = `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Remessas <span>${remessas.length}</span></h4><div class="lista-itens-categoria">${remessas.map((remessa, indice) => `<article class="item-pedido-resumo"><strong>Remessa ${indice + 1} · ${remessa.situacao === "recebida" ? "Recebida" : remessa.situacao === "cancelada" ? "Cancelada" : "Em trânsito"}</strong>${renderizarItensDaRemessa(remessa)}<span>Enviada em ${formatarData(remessa.enviadaEm)}${remessa.recebidaEm ? ` · Recebida em ${formatarData(remessa.recebidaEm)}` : ""}</span>${remessa.situacao === "em_transito" ? `${usuarioEhCD() && !estaNoPortalFilial() ? `<button type="button" class="botao-acao acao-perigo" data-acao="cancelar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}">Cancelar remessa</button>` : ""}${podeConfirmarRecebimento(pedido) ? `<button type="button" class="botao-acao acao-aprovar" data-acao="confirmar-remessa" data-remessa-id="${remessa.id}" data-pedido-id="${pedido.id}"><span class="icone icone-check" aria-hidden="true"></span>Confirmar recebimento</button>` : ""}` : ""}</article>`).join("")}</div></section>` + elementos.listaDetalhesPedido.innerHTML;
     }
     const eventos = estado.eventosPedido.filter((evento) => evento.pedidoId === pedido.id).sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
-    if (eventos.length) elementos.listaDetalhesPedido.innerHTML += `<section class="grupo-itens-categoria grupo-itens-categoria-resumo"><h4>Histórico <span>${eventos.length} eventos</span></h4><div class="lista-itens-categoria">${eventos.map((evento) => `<article class="item-pedido-resumo"><strong>${escaparHTML(textoEventoPedido(evento.tipo))}</strong><span>${formatarData(evento.criadoEm)}</span></article>`).join("")}</div></section>`;
+    if (eventos.length) elementos.listaDetalhesPedido.innerHTML += `<section class="grupo-itens-categoria grupo-itens-categoria-resumo grupo-historico-pedido"><h4>Histórico <span>${eventos.length} eventos</span></h4><div class="lista-itens-categoria">${eventos.map((evento) => `<article class="item-pedido-resumo"><strong>${escaparHTML(textoEventoPedido(evento.tipo))}</strong><span>${formatarData(evento.criadoEm)}</span></article>`).join("")}</div></section>`;
     abrirModal(elementos.modalDetalhesPedido);
 }
 
@@ -3922,6 +4004,7 @@ elementos.movimentoProduto.addEventListener("change", () => {
     atualizarInformacaoProdutoMovimento();
     atualizarBotaoCadastrarProdutoXml();
 });
+elementos.acertoProduto.addEventListener("change", atualizarInformacaoProdutoAcerto);
 elementos.movimentoXml.addEventListener("change", importarXmlMovimentacao);
 elementos.movimentoItemXml.addEventListener("change", () => preencherItemXmlMovimentacao(elementos.movimentoItemXml.value));
 elementos.botaoRemoverXml.addEventListener("click", () => limparImportacaoXml());
@@ -4104,6 +4187,52 @@ elementos.formularioMovimentacao.addEventListener("submit", (evento) => {
     notificar(tipoMovimentacaoAtual === "entrada" ? "Entrada registrada." : "Saída registrada.");
 });
 
+elementos.formularioAcertoEstoque.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const produto = buscarProduto(elementos.acertoProduto.value);
+    const quantidadeFisica = Number(elementos.acertoQuantidade.value);
+    const motivo = elementos.acertoObservacao.value.trim();
+
+    elementos.mensagemAcertoEstoque.textContent = "";
+    if (!produto || !produto.ativo) {
+        elementos.mensagemAcertoEstoque.textContent = "Selecione um produto válido.";
+        return;
+    }
+    if (!Number.isInteger(quantidadeFisica) || quantidadeFisica < 0) {
+        elementos.mensagemAcertoEstoque.textContent = "Informe uma quantidade física inteira igual ou maior que zero.";
+        return;
+    }
+    if (!motivo) {
+        elementos.mensagemAcertoEstoque.textContent = "Informe o motivo do acerto para manter a rastreabilidade.";
+        return;
+    }
+
+    const saldoAntes = produto.quantidade;
+    if (quantidadeFisica === saldoAntes) {
+        elementos.mensagemAcertoEstoque.textContent = "A quantidade física já é igual ao saldo registrado.";
+        return;
+    }
+
+    produto.quantidade = quantidadeFisica;
+    produto.atualizadoEm = new Date().toISOString();
+    registrarMovimentacao({
+        produto,
+        tipo: "ajuste",
+        quantidade: Math.abs(quantidadeFisica - saldoAntes),
+        saldoAntes,
+        saldoDepois: quantidadeFisica,
+        observacao: `Acerto de estoque: ${motivo}`
+    });
+
+    elementos.botaoConfirmarAcerto.disabled = true;
+    await salvarEstado();
+    elementos.acertoQuantidade.value = "";
+    elementos.acertoObservacao.value = "";
+    elementos.botaoConfirmarAcerto.disabled = false;
+    renderizarTudo();
+    notificar("Acerto de estoque registrado.");
+});
+
 elementos.formularioPedido.addEventListener("submit", (evento) => {
     evento.preventDefault();
     const filial = buscarFilial(elementos.pedidoFilial.value);
@@ -4212,9 +4341,29 @@ elementos.seletorPortal.addEventListener("change", () => {
 });
 
 elementos.itemPedidoProduto.addEventListener("change", atualizarEstoqueAtualDoItemPedido);
-elementos.buscaItemPedido.addEventListener("input", selecionarProdutoPedidoPorBusca);
+elementos.buscaItemPedido.addEventListener("focus", () => renderizarSugestoesBuscaItemPedido(true));
+elementos.buscaItemPedido.addEventListener("input", () => {
+    selecionarProdutoPedidoPorBusca();
+    renderizarSugestoesBuscaItemPedido(true);
+});
 elementos.buscaItemPedido.addEventListener("keydown", (evento) => {
-    if (evento.key === "Enter") selecionarProdutoPedidoPorBusca();
+    if (evento.key === "Enter") {
+        const produto = selecionarProdutoPedidoPorBusca();
+        if (produto) selecionarProdutoDaBuscaPedido(produto.id);
+    }
+    if (evento.key === "Escape") {
+        elementos.opcoesBuscaItemPedido.hidden = true;
+        elementos.buscaItemPedido.setAttribute("aria-expanded", "false");
+    }
+});
+elementos.opcoesBuscaItemPedido.addEventListener("click", (evento) => {
+    const opcao = evento.target.closest("[data-produto-id]");
+    if (opcao) selecionarProdutoDaBuscaPedido(opcao.dataset.produtoId);
+});
+document.addEventListener("pointerdown", (evento) => {
+    if (evento.target.closest(".campo-busca-pedido")) return;
+    elementos.opcoesBuscaItemPedido.hidden = true;
+    elementos.buscaItemPedido.setAttribute("aria-expanded", "false");
 });
 
 elementos.formularioItemPedido.addEventListener("submit", (evento) => {

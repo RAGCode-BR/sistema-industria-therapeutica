@@ -24,6 +24,7 @@
                     <button class="item-menu" data-pagina="produtos"><span class="icone icone-produtos" aria-hidden="true"></span><span>Meu estoque</span></button>
                     <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="entrada"><span class="icone icone-entrada" aria-hidden="true"></span><span>Entradas</span></button>
                     <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="saida"><span class="icone icone-saida" aria-hidden="true"></span><span>Saídas</span></button>
+                    <button class="item-menu" data-pagina="acerto-estoque"><span class="icone icone-ajuste" aria-hidden="true"></span><span>Acerto de estoque</span></button>
                     <button class="item-menu" data-pagina="estoque-baixo"><span class="icone icone-alerta" aria-hidden="true"></span><span>Estoque baixo</span></button>
                     <button class="item-menu" data-pagina="pedidos"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Pedidos das filiais</span><span class="notificacao-pedidos" id="notificacao-pedidos" hidden aria-label="Nenhum pedido pendente">0</span></button>
                     <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
@@ -300,6 +301,40 @@
                     </section>
                 </section>
 
+                <section class="pagina" id="pagina-acerto-estoque">
+                    <div class="cabecalho-secao">
+                        <div>
+                            <p class="subtitulo-secao">Conferência de saldo</p>
+                            <h2>Acerto de estoque</h2>
+                            <p>Informe a quantidade física encontrada para corrigir o saldo atual do produto.</p>
+                        </div>
+                    </div>
+
+                    <section class="formulario-pagina-container">
+                        <form id="formulario-acerto-estoque" class="formulario-pagina">
+                            <label for="acerto-produto">Produto</label>
+                            <select id="acerto-produto" required></select>
+
+                            <div class="info-produto" id="info-produto-acerto">
+                                Selecione um produto para conferir o saldo atual.
+                            </div>
+
+                            <label for="acerto-quantidade">Quantidade física encontrada</label>
+                            <input id="acerto-quantidade" type="number" min="0" step="1" placeholder="Exemplo: 10" required>
+                            <small>O sistema ajustará somente o estoque atual. O estoque mínimo não será alterado.</small>
+
+                            <label for="acerto-observacao">Motivo do acerto</label>
+                            <textarea id="acerto-observacao" rows="4" placeholder="Exemplo: Contagem de inventário, avaria ou correção de cadastro" required></textarea>
+
+                            <p class="mensagem-formulario" id="mensagem-acerto-estoque" aria-live="polite"></p>
+
+                            <div class="acoes-formulario">
+                                <button class="botao-principal botao-confirmar-acerto" type="submit" id="botao-confirmar-acerto"><span class="icone icone-ajuste" aria-hidden="true"></span>Aplicar acerto de estoque</button>
+                            </div>
+                        </form>
+                    </section>
+                </section>
+
                 <section class="pagina" id="pagina-estoque-baixo">
                     <div class="cabecalho-secao">
                         <div>
@@ -468,8 +503,10 @@
                         <form id="formulario-item-pedido" class="formulario-pagina-container formulario-item-pedido">
                             <h3>Adicionar item</h3>
                             <label for="busca-item-pedido">Produto</label>
-                            <input type="search" id="busca-item-pedido" list="opcoes-busca-item-pedido" placeholder="Digite o nome ou código do produto" autocomplete="off" required>
-                            <datalist id="opcoes-busca-item-pedido"></datalist>
+                            <div class="campo-busca-pedido">
+                                <input type="search" id="busca-item-pedido" placeholder="Digite o nome ou código do produto" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="opcoes-busca-item-pedido" required>
+                                <div class="opcoes-busca-pedido" id="opcoes-busca-item-pedido" role="listbox" hidden></div>
+                            </div>
                             <select id="item-pedido-produto" hidden aria-hidden="true" tabindex="-1"></select>
 
                             <div class="campos-lado-a-lado">
@@ -484,7 +521,7 @@
                             </div>
 
                             <p class="mensagem-formulario" id="mensagem-item-pedido" aria-live="polite"></p>
-                            <button class="botao-secundario" type="submit">Adicionar à lista</button>
+                            <button class="botao-secundario botao-adicionar-item" type="submit"><span class="icone icone-plus" aria-hidden="true"></span>Adicionar à lista</button>
                         </form>
 
                         <section class="carrinho-pedido">
@@ -497,8 +534,8 @@
                             <textarea id="observacao-pedido-completo" rows="3" placeholder="Exemplo: Pedido para reposição da próxima semana"></textarea>
                             <p class="mensagem-formulario" id="mensagem-pedido-filial" aria-live="polite"></p>
                             <div class="acoes-formulario">
-                                <button type="button" class="botao-secundario" id="botao-limpar-carrinho">Limpar lista</button>
-                                <button type="button" class="botao-principal" id="botao-enviar-pedido-lista">Enviar pedido ao CD</button>
+                                <button type="button" class="botao-secundario botao-limpar-lista" id="botao-limpar-carrinho"><span class="icone icone-limpar" aria-hidden="true"></span>Limpar lista</button>
+                                <button type="button" class="botao-principal botao-enviar-pedido" id="botao-enviar-pedido-lista"><span class="icone icone-saida" aria-hidden="true"></span>Enviar pedido ao CD</button>
                             </div>
                         </section>
                     </section>
