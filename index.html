@@ -456,6 +456,15 @@
                         <article class="quadro"><div class="titulo-quadro"><div><h2>Status dos pedidos</h2><p>Clique em um status para filtrar</p></div></div><div id="relatorio-status-grafico" class="grafico-status"></div></article>
                     </section>
 
+                    <section class="quadro calendario-saidas-relatorio">
+                        <div class="titulo-quadro">
+                            <div><h2>Calendário de saídas</h2><p>Unidades que saíram do CD por dia, incluindo expedições para as filiais.</p></div>
+                            <label class="seletor-mes-calendario"><span>Mês</span><input type="month" id="relatorio-calendario-mes"></label>
+                        </div>
+                        <div class="legenda-calendario-saidas"><span><i></i>Saídas e expedições registradas</span><span id="relatorio-calendario-total"></span></div>
+                        <div class="calendario-saidas" id="relatorio-calendario-saidas" aria-live="polite"></div>
+                    </section>
+
                     <section class="painel-duplo relatorio-listas">
                         <article class="quadro"><div class="titulo-quadro"><div><h2>Produtos mais solicitados</h2><p>Demanda consolidada por produto</p></div><select id="relatorio-limite-produtos" aria-label="Quantidade de produtos"><option value="5">Top 5</option><option value="10">Top 10</option></select></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Pedidos</th></tr></thead><tbody id="relatorio-produtos-solicitados"></tbody></table></div></article>
                         <article class="quadro"><div class="titulo-quadro"><div><h2>Produtos com mais pendências</h2><p>Prioridade para produção e estoque</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Pedidos</th></tr></thead><tbody id="relatorio-produtos-pendentes"></tbody></table></div></article>
@@ -938,7 +947,7 @@
                 <p class="texto-apoio" id="remessa-resumo">Informe as quantidades que sairão nesta remessa.</p>
                 <div id="lista-itens-remessa" class="itens-pedido-resumo"></div>
                 <div class="data-entrega-grid">
-                    <label for="remessa-envio-previsto"><span>Previsão de expedição</span><input type="date" id="remessa-envio-previsto"></label>
+                    <label for="remessa-envio-previsto"><span>Previsão de envio</span><input type="date" id="remessa-envio-previsto"></label>
                     <label for="remessa-entrega-prevista"><span>Previsão de entrega</span><input type="date" id="remessa-entrega-prevista"></label>
                 </div>
                 <p class="mensagem-formulario" id="mensagem-remessa" aria-live="polite"></p>

@@ -105,6 +105,9 @@ const elementos = {
     relatorioTempoEnvio: document.querySelector("#relatorio-tempo-envio"),
     relatorioProdutosSolicitados: document.querySelector("#relatorio-produtos-solicitados"),
     relatorioEnviosFiliais: document.querySelector("#relatorio-envios-filiais"),
+    relatorioCalendarioMes: document.querySelector("#relatorio-calendario-mes"),
+    relatorioCalendarioSaidas: document.querySelector("#relatorio-calendario-saidas"),
+    relatorioCalendarioTotal: document.querySelector("#relatorio-calendario-total"),
     relatorioPeriodo: document.querySelector("#relatorio-periodo"),
     relatorioDataInicial: document.querySelector("#relatorio-data-inicial"),
     relatorioDataFinal: document.querySelector("#relatorio-data-final"),
@@ -1121,7 +1124,7 @@ function usuarioEhFilialDestinataria(pedido) {
 }
 
 function podeConfirmarRecebimento(pedido) {
-    return usuarioEhCD() || usuarioEhFilialDestinataria(pedido);
+    return usuarioEhFilialDestinataria(pedido);
 }
 
 function itensDoPedido(pedido) {
@@ -1843,6 +1846,29 @@ function renderizarEstoqueBaixo() {
         : "<tr><td colspan=\"6\" class=\"tabela-vazia\">Nenhum produto está com estoque baixo.</td></tr>";
 }
 
+function resumoQuantidadesItemPedido(pedido, item, opcoes = {}) {
+    const { mostrarEstoqueFilial = false } = opcoes;
+    const atendimento = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens
+        .find((registro) => registro.produtoId === item.produtoId);
+    const situacao = situacaoDoItemPedido(item, pedido);
+    const enviado = atendimento?.enviado || 0;
+    const pendente = atendimento?.pendente || 0;
+    const disponivel = situacao === "recusado" ? 0 : quantidadeDisponivelParaPedido(pedido, item.produtoId);
+    const quantidadeProducao = situacao === "recusado" ? 0 : Math.max(pendente - disponivel, 0);
+    const producaoProgramada = Boolean(item.producaoPrevista) || situacao === "em_producao";
+    const unidade = escaparHTML(item.unidade);
+    const quantidade = (valor) => `${formatarNumero(valor)} ${unidade}`;
+
+    return `<div class="resumo-quantidades-item">
+        <span class="quantidade-resumo solicitado"><small>Solicitado</small><strong>${quantidade(item.quantidadeSolicitada)}</strong></span>
+        ${mostrarEstoqueFilial ? `<span class="quantidade-resumo estoque-filial"><small>Estoque filial</small><strong>${quantidade(item.estoqueInformado)}</strong></span>` : ""}
+        <span class="quantidade-resumo disponivel"><small>Disponível CD</small><strong>${quantidade(disponivel)}</strong></span>
+        <span class="quantidade-resumo enviado"><small>Enviado</small><strong>${quantidade(enviado)}</strong></span>
+        <span class="quantidade-resumo pendente"><small>Falta enviar</small><strong>${quantidade(pendente)}</strong></span>
+        ${quantidadeProducao > 0 ? `<span class="quantidade-resumo producao ${producaoProgramada ? "producao-programada" : ""}"><small>${producaoProgramada ? "Em produção" : "A produzir"}</small><strong>${quantidade(quantidadeProducao)}</strong>${item.producaoPrevista ? `<em>Prev.: ${formatarDataSimples(item.producaoPrevista)}</em>` : ""}</span>` : ""}
+    </div>`;
+}
+
 function renderizarPedidos() {
     const statusSelecionado = elementos.filtroStatusPedidos.value;
     const statusItemSelecionado = elementos.filtroStatusItensPedidos.value;
@@ -1868,12 +1894,10 @@ function renderizarPedidos() {
             const producao = pedido.producaoPrevista ? `Prazo de produção: ${formatarDataSimples(pedido.producaoPrevista)}` : "";
             const entrega = pedido.entregaPrevista ? `Entrega prevista: ${formatarDataSimples(pedido.entregaPrevista)}` : "";
             const listaItens = renderizarItensAgrupadosPorCategoria(itensVisiveis, (item) => `
-                <div class="item-pedido-resumo">
-                    <div class="informacoes-item-resumo"><strong>${escaparHTML(item.produtoNome)}</strong>
-                    <span>Filial: ${formatarNumero(item.estoqueInformado)} · Pedido: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span>
-                    </div>
-                    <span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoDoItemPedido(item, pedido))}">${textoSituacaoPedido(situacaoDoItemPedido(item, pedido))}</span>
-                </div>
+                <details class="item-pedido-resumo item-pedido-dobravel">
+                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoDoItemPedido(item, pedido))}">${textoSituacaoPedido(situacaoDoItemPedido(item, pedido))}</span></summary>
+                    <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}</div>
+                </details>
             `, "grupo-itens-categoria-resumo");
             const haItensPendentes = itens.some((item) => (item.situacao || pedido.situacao) === "pendente");
             const itensPendentesDeEnvio = atendimento.itens.filter((item) => item.pendente > 0 && situacaoDoItemPedido(item, pedido) !== "recusado");
@@ -1915,12 +1939,10 @@ function abrirModalAnalisarPedido(pedidoId) {
     elementos.tituloModalAnalisarPedido.textContent = `Pedido da filial ${filial?.nome || ""}`.trim();
     elementos.listaAnalisarPedido.innerHTML = renderizarItensAgrupadosPorCategoria(itensDoPedido(pedido), (item) => {
         const situacao = situacaoDoItemPedido(item, pedido);
-        const produto = buscarProduto(item.produtoId);
-        const estoqueNoCD = numeroInteiroNaoNegativo(produto?.quantidade);
         const acoes = situacao === "pendente"
             ? `<div class="acoes-tabela"><button type="button" class="botao-acao acao-aprovar" data-acao="aprovar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}"><span class="icone icone-check" aria-hidden="true"></span>Aprovar</button><button type="button" class="botao-acao acao-perigo" data-acao="recusar-item-pedido" data-pedido-id="${pedido.id}" data-produto-id="${item.produtoId}"><span class="icone icone-recusar" aria-hidden="true"></span>Recusar</button></div>`
             : "";
-        return `<article class="item-analise-pedido"><div class="item-analise-informacoes"><strong>${escaparHTML(item.produtoNome)}</strong><span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span><span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span><span class="estoque-disponivel-cd">Disponível no CD: ${formatarNumero(estoqueNoCD)} ${escaparHTML(item.unidade)}</span>${item.observacaoMatriz ? `<span>${escaparHTML(item.observacaoMatriz)}</span>` : ""}</div><div class="item-analise-acoes"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span>${acoes}</div></article>`;
+        return `<article class="item-analise-pedido"><div class="item-analise-informacoes"><strong>${escaparHTML(item.produtoNome)}</strong>${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}${item.observacaoMatriz ? `<span>${escaparHTML(item.observacaoMatriz)}</span>` : ""}</div><div class="item-analise-acoes"><span class="selo-tipo ${classeSituacaoPedido(situacao)}">${textoSituacaoPedido(situacao)}</span>${acoes}</div></article>`;
     }, "grupo-itens-categoria-analise");
     const todosItensAnalisados = itensDoPedido(pedido).every((item) => situacaoDoItemPedido(item, pedido) !== "pendente");
     elementos.botaoEnviarPedidoAnalisado.disabled = !todosItensAnalisados;
@@ -2369,6 +2391,63 @@ function renderizarStatusRelatorio(registros) {
     elementos.relatorioStatusGrafico.innerHTML = `<div class="donut-status" style="background:conic-gradient(${partes})"><strong>${formatarNumero(registros.length)}</strong><span>pedidos</span></div><div class="legenda-status">${itens.map(([situacao, quantidade], indice) => `<button type="button" data-acao="relatorio-filtrar-status" data-status="${situacao}"><i style="background:${cores[indice % cores.length]}"></i>${escaparHTML(textoSituacaoPedido(situacao))}<strong>${formatarNumero(quantidade)}</strong></button>`).join("")}</div>`;
 }
 
+function renderizarCalendarioSaidas() {
+    if (!elementos.relatorioCalendarioSaidas || !elementos.relatorioCalendarioMes) return;
+
+    const mesAtual = dataLocalISO(new Date()).slice(0, 7);
+    const mesSelecionado = elementos.relatorioCalendarioMes.value || mesAtual;
+    elementos.relatorioCalendarioMes.value = mesSelecionado;
+
+    const [ano, mes] = mesSelecionado.split("-").map(Number);
+    if (!Number.isInteger(ano) || !Number.isInteger(mes)) return;
+
+    const saidasPorDia = new Map();
+    estado.movimentacoes
+        .filter((movimentacao) => ["saida", "transferencia"].includes(movimentacao.tipo))
+        .filter((movimentacao) => dataLocalISO(new Date(movimentacao.criadoEm)).startsWith(mesSelecionado))
+        .filter((movimentacao) => {
+            const produto = buscarProduto(movimentacao.produtoId);
+            return (!filtrosRelatorio.filialId || movimentacao.filialId === filtrosRelatorio.filialId)
+                && (!filtrosRelatorio.produtoId || movimentacao.produtoId === filtrosRelatorio.produtoId)
+                && (!filtrosRelatorio.categoria || produto?.categoria === filtrosRelatorio.categoria);
+        })
+        .forEach((movimentacao) => {
+            const data = new Date(movimentacao.criadoEm);
+            if (Number.isNaN(data.getTime())) return;
+            const dia = data.getDate();
+            const produto = buscarProduto(movimentacao.produtoId);
+            const registro = saidasPorDia.get(dia) || { quantidade: 0, produtos: new Map() };
+            const produtoRegistrado = registro.produtos.get(movimentacao.produtoId) || {
+                nome: movimentacao.produtoNome || produto?.nome || "Produto não identificado",
+                unidade: movimentacao.unidade || produto?.unidade || "Unidade",
+                quantidade: 0
+            };
+            produtoRegistrado.quantidade += movimentacao.quantidade;
+            registro.quantidade += movimentacao.quantidade;
+            registro.produtos.set(movimentacao.produtoId, produtoRegistrado);
+            saidasPorDia.set(dia, registro);
+        });
+
+    const primeiroDia = new Date(ano, mes - 1, 1);
+    const totalDias = new Date(ano, mes, 0).getDate();
+    const inicioSemana = (primeiroDia.getDay() + 6) % 7;
+    const totalUnidades = [...saidasPorDia.values()].reduce((total, registro) => total + registro.quantidade, 0);
+    const nomeMes = primeiroDia.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    const cabecalhos = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    const celulasVazias = Array.from({ length: inicioSemana }, () => '<div class="dia-calendario vazio" aria-hidden="true"></div>').join("");
+    const hoje = dataLocalISO(new Date());
+    const dias = Array.from({ length: totalDias }, (_valor, indice) => {
+        const dia = indice + 1;
+        const chave = `${mesSelecionado}-${String(dia).padStart(2, "0")}`;
+        const registro = saidasPorDia.get(dia);
+        const produtos = registro ? [...registro.produtos.values()].sort((a, b) => b.quantidade - a.quantidade || a.nome.localeCompare(b.nome, "pt-BR")) : [];
+        return `<article class="dia-calendario ${registro ? "tem-saida" : ""} ${chave === hoje ? "hoje" : ""}"><time datetime="${chave}">${dia}</time>${registro ? `<strong>${formatarNumero(registro.quantidade)} <small>un.</small></strong><div class="produtos-dia-calendario">${produtos.map((produto) => `<span title="${escaparHTML(produto.nome)}: ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}"><b>${escaparHTML(produto.nome)}</b><em>${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</em></span>`).join("")}</div>` : ""}</article>`;
+    }).join("");
+
+    elementos.relatorioCalendarioSaidas.innerHTML = `<p class="titulo-mes-calendario">${escaparHTML(nomeMes)}</p><div class="semana-calendario">${cabecalhos.map((dia) => `<span>${dia}</span>`).join("")}</div><div class="dias-calendario">${celulasVazias}${dias}</div>`;
+    elementos.relatorioCalendarioTotal.textContent = totalUnidades ? `${formatarNumero(totalUnidades)} unidades no mês` : "Sem saídas no mês selecionado";
+}
+
 function renderizarRelatorios() {
     if (!elementos.relatorioPedidosRealizados) return;
     preencherFiltrosRelatorio();
@@ -2452,6 +2531,7 @@ function renderizarRelatorios() {
     elementos.relatorioPedidosCriticos.innerHTML = criticos.length ? criticos.map(({ registro, problema, classe, aguardando }) => `<tr><td><button type="button" class="link-relatorio" data-acao="relatorio-ver-pedido" data-pedido-id="${escaparHTML(registro.pedido.id)}">${numeroPedidoParaExibicao(registro.pedido)}</button></td><td>${escaparHTML(buscarFilial(registro.pedido.filialId)?.nome || "—")}</td><td><span class="selo-tipo ${classe}">${escaparHTML(problema)}</span></td><td>${registro.prazo ? formatarDataSimples(registro.prazo) : "Sem prazo"}</td><td>${aguardando}</td><td>${escaparHTML(textoSituacaoPedido(registro.situacao))}</td></tr>`).join("") : linhasVaziasRelatorio(6, "Nenhum pedido requer atenção no período.");
     renderizarEvolucaoRelatorio(registros, intervalo);
     renderizarStatusRelatorio(registros);
+    renderizarCalendarioSaidas();
 }
 
 function exportarRelatorioCsv() {
@@ -2526,11 +2606,10 @@ function renderizarPortalFilial() {
                             const situacaoItem = item.situacao || pedido.situacao;
                             const motivoRecusa = item.observacaoMatriz || pedido.observacaoMatriz || "Motivo não informado pelo CD.";
                             return `
-                                <div class="item-pedido-resumo">
-                                    <strong>${escaparHTML(item.produtoNome)}</strong>
-                                    <span>Estoque informado: ${formatarNumero(item.estoqueInformado)} · Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)}</span>
-                                    ${situacaoItem === "recusado" ? `<span class="motivo-recusa-pedido">Motivo da recusa: ${escaparHTML(motivoRecusa)}</span>` : ""}
-                                </div>
+                                <details class="item-pedido-resumo item-pedido-dobravel">
+                                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoItem)}">${textoSituacaoPedido(situacaoItem)}</span></summary>
+                                    <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}${situacaoItem === "recusado" ? `<span class="motivo-recusa-pedido">Motivo da recusa: ${escaparHTML(motivoRecusa)}</span>` : ""}</div>
+                                </details>
                             `;
                         }, "grupo-itens-categoria-filial")}
                     </div>
@@ -3318,7 +3397,6 @@ function abrirModalDetalhesPedido(pedidoId) {
         const situacao = item.situacao || pedido.situacao || "pendente";
         const atendimentoItem = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens.find((registro) => registro.produtoId === item.produtoId);
         const foiEnviado = (atendimentoItem?.enviado || 0) > 0;
-        const quantidadeEnviada = atendimentoItem?.enviado || 0;
         const quantidadePendente = atendimentoItem?.pendente || 0;
         const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
         const envioParcial = foiEnviado && quantidadePendente > 0;
@@ -3342,8 +3420,7 @@ function abrirModalDetalhesPedido(pedidoId) {
             <article class="item-detalhes-pedido">
                 <div>
                     <strong>${escaparHTML(item.produtoNome)}</strong>
-                    <span>Solicitado: ${formatarNumero(item.quantidadeSolicitada)} ${escaparHTML(item.unidade)} · Enviado: ${formatarNumero(quantidadeEnviada)} · Faltam: ${formatarNumero(quantidadePendente)} ${escaparHTML(item.unidade)}</span>
-                    <span>Estoque informado pela filial: ${formatarNumero(item.estoqueInformado)} ${escaparHTML(item.unidade)}</span>
+                    ${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}
                     <span>${escaparHTML(descricao)}</span>
                 </div>
                 <div class="acoes-item-detalhes">
@@ -3372,7 +3449,7 @@ async function confirmarRecebimentoRemessa(remessaId, pedidoId) {
     if (!clienteSupabase) return;
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     if (!podeConfirmarRecebimento(pedido)) {
-        notificar("Somente o administrador do CD ou a filial destinatária pode confirmar esta remessa.", "erro");
+        notificar("Somente a filial destinatária pode confirmar esta remessa.", "erro");
         return;
     }
     const { error } = await clienteSupabase.rpc("confirmar_recebimento_remessa", { p_remessa_id: remessaId });
@@ -4635,6 +4712,7 @@ function atualizarFiltrosRelatorio() {
 [elementos.relatorioPeriodo, elementos.relatorioDataInicial, elementos.relatorioDataFinal, elementos.relatorioFilial, elementos.relatorioStatus, elementos.relatorioProduto, elementos.relatorioCategoria, elementos.relatorioLimiteProdutos]
     .filter(Boolean)
     .forEach((campo) => campo.addEventListener("change", atualizarFiltrosRelatorio));
+elementos.relatorioCalendarioMes?.addEventListener("change", renderizarCalendarioSaidas);
 
 elementos.botaoLimparRelatorios?.addEventListener("click", () => {
     filtrosRelatorio = { ...filtrosRelatorioPadrao };

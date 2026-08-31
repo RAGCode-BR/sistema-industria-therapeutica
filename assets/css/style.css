@@ -2158,6 +2158,219 @@ tbody tr:last-child td {
     font-size: 12px;
 }
 
+.resumo-quantidades-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 0;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.resumo-quantidades-item .quantidade-resumo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 0 8px;
+    border-right: 1px solid #eadfd9;
+}
+
+.resumo-quantidades-item .quantidade-resumo small {
+    color: var(--marrom-claro);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.resumo-quantidades-item .quantidade-resumo strong {
+    color: var(--marrom);
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.resumo-quantidades-item .quantidade-resumo em {
+    color: var(--marrom-claro);
+    font-size: 11px;
+    font-style: normal;
+    white-space: nowrap;
+}
+
+.resumo-quantidades-item .disponivel strong { color: var(--verde); }
+.resumo-quantidades-item .enviado strong { color: var(--verde); }
+.resumo-quantidades-item .pendente strong { color: #a96c00; }
+.resumo-quantidades-item .producao strong { color: var(--salmão-escuro); }
+.resumo-quantidades-item .producao-programada strong { color: var(--verde); }
+.resumo-quantidades-item .quantidade-resumo:last-child { border-right: 0; }
+
+.cabecalho-item-quantidades {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+.cabecalho-item-quantidades > strong { min-width: 0; }
+
+.cabecalho-item-quantidades .selo-status-item { margin: 0; }
+
+.grupo-itens-categoria-resumo .item-pedido-dobravel,
+.grupo-itens-categoria-filial .item-pedido-dobravel,
+#pagina-pedidos .item-pedido-dobravel,
+#pagina-meus-pedidos .item-pedido-dobravel {
+    display: block;
+}
+
+.item-pedido-dobravel > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 3px 0;
+    cursor: pointer;
+    list-style: none;
+}
+
+.item-pedido-dobravel > summary::-webkit-details-marker { display: none; }
+
+.item-pedido-dobravel > summary::after {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--salmão-escuro);
+    content: "+";
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 16px;
+    text-align: center;
+}
+
+.item-pedido-dobravel[open] > summary::after { content: "−"; }
+
+.item-pedido-dobravel > summary:focus-visible {
+    border-radius: 5px;
+    outline: 2px solid var(--salmão);
+    outline-offset: 3px;
+}
+
+.item-pedido-dobravel > summary > strong {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.calendario-saidas-relatorio { margin-top: 24px; }
+
+.seletor-mes-calendario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--marrom-claro);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.seletor-mes-calendario input {
+    width: 145px;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.legenda-calendario-saidas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0 15px;
+    color: var(--marrom-claro);
+    font-size: 12px;
+}
+
+.legenda-calendario-saidas span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.legenda-calendario-saidas i { width: 10px; height: 10px; background: var(--salmão); border-radius: 3px; }
+.legenda-calendario-saidas span:last-child { color: var(--marrom); font-weight: 800; }
+
+.titulo-mes-calendario {
+    margin: 0 0 10px;
+    color: var(--marrom);
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: capitalize;
+}
+
+.calendario-saidas { overflow-x: auto; }
+
+.semana-calendario,
+.dias-calendario {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    min-width: 700px;
+}
+
+.semana-calendario span {
+    padding: 8px 6px;
+    color: var(--marrom-claro);
+    background: var(--fundo);
+    border: 1px solid #f1e2dc;
+    border-right: 0;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.semana-calendario span:first-child { border-radius: 8px 0 0 0; }
+.semana-calendario span:last-child { border-right: 1px solid #f1e2dc; border-radius: 0 8px 0 0; }
+
+.dia-calendario {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 112px;
+    padding: 8px;
+    background: var(--branco);
+    border-right: 1px solid #f1e2dc;
+    border-bottom: 1px solid #f1e2dc;
+}
+
+.dia-calendario:nth-child(7n + 1) { border-left: 1px solid #f1e2dc; }
+.dia-calendario time { color: var(--marrom-claro); font-size: 12px; font-weight: 800; }
+.dia-calendario.tem-saida { background: #fffaf8; }
+.dia-calendario.hoje { box-shadow: inset 0 0 0 2px var(--salmão); }
+.dia-calendario > strong { margin-top: 4px; color: var(--salmão-escuro); font-size: 14px; }
+.dia-calendario > strong small { font-size: 10px; }
+
+.produtos-dia-calendario {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 0;
+    margin-top: 5px;
+    overflow-y: auto;
+}
+
+.produtos-dia-calendario span {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    color: var(--marrom);
+    font-size: 10px;
+}
+
+.produtos-dia-calendario b { overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.produtos-dia-calendario em { flex: 0 0 auto; color: var(--salmão-escuro); font-style: normal; font-weight: 800; }
+
+.item-pedido-dobravel > summary .selo-status-item {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.conteudo-item-dobravel {
+    padding: 8px 0 4px;
+    margin-top: 5px;
+    border-top: 1px solid #f3e4de;
+}
+
 .filtros-status-pedidos {
     display: flex;
     flex-wrap: wrap;
@@ -3137,6 +3350,10 @@ svg { max-width: 100%; }
 }
 
 @media (max-width: 520px) {
+    .resumo-quantidades-item { gap: 5px 0; }
+    .resumo-quantidades-item .quantidade-resumo { padding: 0 7px; }
+    .cabecalho-item-quantidades { flex-direction: column; }
+    .cabecalho-item-quantidades .selo-status-item { align-self: flex-start; }
     #pagina-meus-pedidos .grupo-itens-categoria-filial { margin: 14px 0; }
     #pagina-meus-pedidos .grupo-itens-categoria-filial .item-pedido-resumo { gap: 6px; padding: 10px 0; }
 }
