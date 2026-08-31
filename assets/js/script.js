@@ -45,7 +45,7 @@ const titulosPaginas = {
     dashboard: "Dashboard",
     produtos: "Produtos",
     movimentacao: "Movimentação",
-    "acerto-estoque": "Acerto de estoque",
+    "acerto-estoque": "Ajuste de estoque",
     "estoque-baixo": "Estoque baixo",
     pedidos: "Pedidos",
     "portal-filial": "Portal da filial",
@@ -168,6 +168,8 @@ const elementos = {
     botaoConfirmarMovimento: document.querySelector("#botao-confirmar-movimento"),
     formularioAcertoEstoque: document.querySelector("#formulario-acerto-estoque"),
     acertoProduto: document.querySelector("#acerto-produto"),
+    buscaAcertoProduto: document.querySelector("#busca-acerto-produto"),
+    opcoesBuscaAcertoProduto: document.querySelector("#opcoes-busca-acerto-produto"),
     acertoQuantidade: document.querySelector("#acerto-quantidade"),
     acertoObservacao: document.querySelector("#acerto-observacao"),
     infoProdutoAcerto: document.querySelector("#info-produto-acerto"),
@@ -1909,8 +1911,62 @@ function renderizarFormularioAcertoEstoque() {
     }
 
     elementos.acertoProduto.disabled = ativos.length === 0;
+    elementos.buscaAcertoProduto.disabled = ativos.length === 0;
     elementos.botaoConfirmarAcerto.disabled = ativos.length === 0;
+    sincronizarBuscaAcertoComProduto();
+    renderizarSugestoesBuscaAcerto();
     atualizarInformacaoProdutoAcerto();
+}
+
+function sincronizarBuscaAcertoComProduto() {
+    const produto = buscarProduto(elementos.acertoProduto.value);
+    elementos.buscaAcertoProduto.value = produto ? textoProdutoParaBuscaMovimento(produto) : "";
+}
+
+function produtosDaBuscaAcerto() {
+    const busca = textoNormalizado(elementos.buscaAcertoProduto.value);
+    return produtosAtivos()
+        .filter((produto) => !busca || textoNormalizado(`${produto.codigo} ${produto.nome}`).includes(busca))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+function renderizarSugestoesBuscaAcerto(mostrar = document.activeElement === elementos.buscaAcertoProduto) {
+    const produtos = produtosDaBuscaAcerto();
+    elementos.opcoesBuscaAcertoProduto.innerHTML = produtos.length
+        ? produtos.map((produto) => `<button type="button" role="option" class="opcao-busca-pedido" data-produto-id="${produto.id}" aria-selected="${produto.id === elementos.acertoProduto.value}"><span>${escaparHTML(produto.codigo || "Sem código")}</span><strong>${escaparHTML(produto.nome)}</strong><small>${escaparHTML(produto.categoria)} · ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</small></button>`).join("")
+        : `<p class="opcoes-busca-vazia">Nenhum produto encontrado.</p>`;
+    elementos.opcoesBuscaAcertoProduto.hidden = !mostrar;
+    elementos.buscaAcertoProduto.setAttribute("aria-expanded", String(mostrar));
+}
+
+function selecionarProdutoDaBuscaAcerto(produtoId) {
+    const produto = buscarProduto(produtoId);
+    if (!produto) return;
+    elementos.acertoProduto.value = produto.id;
+    sincronizarBuscaAcertoComProduto();
+    elementos.opcoesBuscaAcertoProduto.hidden = true;
+    elementos.buscaAcertoProduto.setAttribute("aria-expanded", "false");
+    atualizarInformacaoProdutoAcerto();
+}
+
+function selecionarProdutoAcertoPorBusca() {
+    const busca = elementos.buscaAcertoProduto.value.trim().toLocaleLowerCase("pt-BR");
+    if (!busca) {
+        elementos.acertoProduto.value = "";
+        atualizarInformacaoProdutoAcerto();
+        return null;
+    }
+    const produto = produtosAtivos().find((item) => {
+        const opcao = textoProdutoParaBuscaMovimento(item).toLocaleLowerCase("pt-BR");
+        return opcao === busca || String(item.codigo || "").toLocaleLowerCase("pt-BR") === busca || item.nome.toLocaleLowerCase("pt-BR") === busca;
+    });
+    if (produto) {
+        selecionarProdutoDaBuscaAcerto(produto.id);
+    } else {
+        elementos.acertoProduto.value = "";
+        atualizarInformacaoProdutoAcerto();
+    }
+    return produto;
 }
 
 function atualizarInformacaoProdutoAcerto() {
@@ -1918,7 +1974,7 @@ function atualizarInformacaoProdutoAcerto() {
     if (!produto) {
         elementos.infoProdutoAcerto.textContent = produtosAtivos().length
             ? "Selecione um produto para conferir o saldo atual."
-            : "Cadastre um produto antes de realizar um acerto.";
+            : "Cadastre um produto antes de realizar um ajuste.";
         return;
     }
 
@@ -4315,6 +4371,30 @@ document.addEventListener("pointerdown", (evento) => {
     elementos.buscaMovimentoProduto.setAttribute("aria-expanded", "false");
 });
 elementos.acertoProduto.addEventListener("change", atualizarInformacaoProdutoAcerto);
+elementos.buscaAcertoProduto.addEventListener("focus", () => renderizarSugestoesBuscaAcerto(true));
+elementos.buscaAcertoProduto.addEventListener("input", () => {
+    selecionarProdutoAcertoPorBusca();
+    renderizarSugestoesBuscaAcerto(true);
+});
+elementos.buscaAcertoProduto.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter") {
+        const produto = selecionarProdutoAcertoPorBusca();
+        if (produto) evento.preventDefault();
+    }
+    if (evento.key === "Escape") {
+        elementos.opcoesBuscaAcertoProduto.hidden = true;
+        elementos.buscaAcertoProduto.setAttribute("aria-expanded", "false");
+    }
+});
+elementos.opcoesBuscaAcertoProduto.addEventListener("click", (evento) => {
+    const opcao = evento.target.closest("[data-produto-id]");
+    if (opcao) selecionarProdutoDaBuscaAcerto(opcao.dataset.produtoId);
+});
+document.addEventListener("pointerdown", (evento) => {
+    if (evento.target.closest(".campo-busca-acerto")) return;
+    elementos.opcoesBuscaAcertoProduto.hidden = true;
+    elementos.buscaAcertoProduto.setAttribute("aria-expanded", "false");
+});
 elementos.movimentoXml.addEventListener("change", importarXmlMovimentacao);
 elementos.movimentoItemXml.addEventListener("change", () => preencherItemXmlMovimentacao(elementos.movimentoItemXml.value));
 elementos.botaoRemoverXml.addEventListener("click", () => limparImportacaoXml());
@@ -4531,7 +4611,7 @@ elementos.formularioAcertoEstoque.addEventListener("submit", async (evento) => {
         quantidade: Math.abs(quantidadeFisica - saldoAntes),
         saldoAntes,
         saldoDepois: quantidadeFisica,
-        observacao: `Acerto de estoque: ${motivo}`
+        observacao: `Ajuste de estoque: ${motivo}`
     });
 
     elementos.botaoConfirmarAcerto.disabled = true;
@@ -4540,7 +4620,7 @@ elementos.formularioAcertoEstoque.addEventListener("submit", async (evento) => {
     elementos.acertoObservacao.value = "";
     elementos.botaoConfirmarAcerto.disabled = false;
     renderizarTudo();
-    notificar("Acerto de estoque registrado.");
+    notificar("Ajuste de estoque registrado.");
 });
 
 elementos.formularioPedido.addEventListener("submit", (evento) => {

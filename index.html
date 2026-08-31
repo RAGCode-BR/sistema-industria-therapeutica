@@ -24,7 +24,7 @@
                     <button class="item-menu" data-pagina="produtos"><span class="icone icone-produtos" aria-hidden="true"></span><span>Meu estoque</span></button>
                     <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="entrada"><span class="icone icone-entrada" aria-hidden="true"></span><span>Entradas</span></button>
                     <button class="item-menu" data-pagina="movimentacao" data-tipo-movimentacao="saida"><span class="icone icone-saida" aria-hidden="true"></span><span>Saídas</span></button>
-                    <button class="item-menu" data-pagina="acerto-estoque"><span class="icone icone-ajuste" aria-hidden="true"></span><span>Acerto de estoque</span></button>
+                    <button class="item-menu" data-pagina="acerto-estoque"><span class="icone icone-ajuste" aria-hidden="true"></span><span>Ajuste de estoque</span></button>
                     <button class="item-menu" data-pagina="estoque-baixo"><span class="icone icone-alerta" aria-hidden="true"></span><span>Estoque baixo</span></button>
                     <button class="item-menu" data-pagina="pedidos"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Pedidos das filiais</span><span class="notificacao-pedidos" id="notificacao-pedidos" hidden aria-label="Nenhum pedido pendente">0</span></button>
                     <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
@@ -309,15 +309,19 @@
                     <div class="cabecalho-secao">
                         <div>
                             <p class="subtitulo-secao">Conferência de saldo</p>
-                            <h2>Acerto de estoque</h2>
+                            <h2>Ajuste de estoque</h2>
                             <p>Informe a quantidade física encontrada para corrigir o saldo atual do produto.</p>
                         </div>
                     </div>
 
                     <section class="formulario-pagina-container">
                         <form id="formulario-acerto-estoque" class="formulario-pagina">
-                            <label for="acerto-produto">Produto</label>
-                            <select id="acerto-produto" required></select>
+                            <label for="busca-acerto-produto">Produto</label>
+                            <div class="campo-busca-pedido campo-busca-acerto">
+                                <input id="busca-acerto-produto" type="text" autocomplete="off" placeholder="Digite o nome ou código do produto" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="opcoes-busca-acerto-produto" required>
+                                <div id="opcoes-busca-acerto-produto" class="opcoes-busca-pedido" role="listbox" hidden></div>
+                            </div>
+                            <select id="acerto-produto" hidden></select>
 
                             <div class="info-produto" id="info-produto-acerto">
                                 Selecione um produto para conferir o saldo atual.
@@ -327,13 +331,13 @@
                             <input id="acerto-quantidade" type="number" min="0" step="1" placeholder="Exemplo: 10" required>
                             <small>O sistema ajustará somente o estoque atual. O estoque mínimo não será alterado.</small>
 
-                            <label for="acerto-observacao">Motivo do acerto</label>
+                            <label for="acerto-observacao">Motivo do ajuste</label>
                             <textarea id="acerto-observacao" rows="4" placeholder="Exemplo: Contagem de inventário, avaria ou correção de cadastro" required></textarea>
 
                             <p class="mensagem-formulario" id="mensagem-acerto-estoque" aria-live="polite"></p>
 
                             <div class="acoes-formulario">
-                                <button class="botao-principal botao-confirmar-acerto" type="submit" id="botao-confirmar-acerto"><span class="icone icone-ajuste" aria-hidden="true"></span>Aplicar acerto de estoque</button>
+                                <button class="botao-principal botao-confirmar-acerto" type="submit" id="botao-confirmar-acerto"><span class="icone icone-ajuste" aria-hidden="true"></span>Aplicar ajuste de estoque</button>
                             </div>
                         </form>
                     </section>
