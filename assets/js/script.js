@@ -1851,7 +1851,7 @@ function renderizarEstoqueBaixo() {
 }
 
 function resumoQuantidadesItemPedido(pedido, item, opcoes = {}) {
-    const { mostrarEstoqueFilial = false } = opcoes;
+    const { mostrarEstoqueFilial = false, mostrarDisponivelCD = true } = opcoes;
     const atendimento = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens
         .find((registro) => registro.produtoId === item.produtoId);
     const situacao = situacaoDoItemPedido(item, pedido);
@@ -1866,7 +1866,7 @@ function resumoQuantidadesItemPedido(pedido, item, opcoes = {}) {
     return `<div class="resumo-quantidades-item">
         <span class="quantidade-resumo solicitado"><small>Solicitado</small><strong>${quantidade(item.quantidadeSolicitada)}</strong></span>
         ${mostrarEstoqueFilial ? `<span class="quantidade-resumo estoque-filial"><small>Estoque filial</small><strong>${quantidade(item.estoqueInformado)}</strong></span>` : ""}
-        <span class="quantidade-resumo disponivel"><small>Disponível CD</small><strong>${quantidade(disponivel)}</strong></span>
+        ${mostrarDisponivelCD ? `<span class="quantidade-resumo disponivel"><small>Disponível CD</small><strong>${quantidade(disponivel)}</strong></span>` : ""}
         <span class="quantidade-resumo enviado"><small>Enviado</small><strong>${quantidade(enviado)}</strong></span>
         <span class="quantidade-resumo pendente"><small>Falta enviar</small><strong>${quantidade(pendente)}</strong></span>
         ${quantidadeProducao > 0 ? `<span class="quantidade-resumo producao ${producaoProgramada ? "producao-programada" : ""}"><small>${producaoProgramada ? "Em produção" : "A produzir"}</small><strong>${quantidade(quantidadeProducao)}</strong>${item.producaoPrevista ? `<em>Prev.: ${formatarDataSimples(item.producaoPrevista)}</em>` : ""}</span>` : ""}
@@ -2645,7 +2645,7 @@ function renderizarPortalFilial() {
                             return `
                                 <details class="item-pedido-resumo item-pedido-dobravel">
                                     <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoItem)}">${textoSituacaoPedido(situacaoItem)}</span></summary>
-                                    <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}${situacaoItem === "recusado" ? `<span class="motivo-recusa-pedido">Motivo da recusa: ${escaparHTML(motivoRecusa)}</span>` : ""}</div>
+                                    <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true, mostrarDisponivelCD: false })}${situacaoItem === "recusado" ? `<span class="motivo-recusa-pedido">Motivo da recusa: ${escaparHTML(motivoRecusa)}</span>` : ""}</div>
                                 </details>
                             `;
                         }, "grupo-itens-categoria-filial")}
@@ -2707,7 +2707,7 @@ function produtosDaBuscaDePedido() {
 function renderizarSugestoesBuscaItemPedido(mostrar = document.activeElement === elementos.buscaItemPedido) {
     const produtos = produtosDaBuscaDePedido();
     elementos.opcoesBuscaItemPedido.innerHTML = produtos.length
-        ? produtos.map((produto) => `<button type="button" role="option" class="opcao-busca-pedido" data-produto-id="${produto.id}" aria-selected="${produto.id === elementos.itemPedidoProduto.value}"><span>${escaparHTML(produto.codigo || "Sem código")}</span><strong>${escaparHTML(produto.nome)}</strong><small>${escaparHTML(produto.categoria)} · ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</small></button>`).join("")
+        ? produtos.map((produto) => `<button type="button" role="option" class="opcao-busca-pedido" data-produto-id="${produto.id}" aria-selected="${produto.id === elementos.itemPedidoProduto.value}"><span>${escaparHTML(produto.codigo || "Sem código")}</span><strong>${escaparHTML(produto.nome)}</strong><small>${escaparHTML(produto.categoria)} · ${escaparHTML(produto.unidade)}</small></button>`).join("")
         : `<p class="opcoes-busca-vazia">Nenhum produto encontrado.</p>`;
     elementos.opcoesBuscaItemPedido.hidden = !mostrar;
     elementos.buscaItemPedido.setAttribute("aria-expanded", String(mostrar));
@@ -3212,6 +3212,7 @@ async function criarRemessaDoFormulario() {
 async function iniciarProducaoPedido(pedidoId, prazoProducao, produtoId = "") {
     const pedido = estado.pedidos.find((item) => item.id === pedidoId);
     if (!pedido) return;
+    const detalhesAbertos = elementos.modalDetalhesPedido?.classList.contains("modal-aberto");
 
     const itens = produtoId ? itensDoPedido(pedido).filter((item) => item.produtoId === produtoId) : itensDoPedido(pedido);
     if (!itens.every((item) => ["aprovado", "recusado", "em_transito", "recebido", "em_producao"].includes(situacaoDoItemPedido(item, pedido)))) {
@@ -3234,17 +3235,26 @@ async function iniciarProducaoPedido(pedidoId, prazoProducao, produtoId = "") {
     }
 
     if (clienteSupabase) {
+        elementos.botaoConfirmarData.disabled = true;
         const { error } = produtoId
             ? await clienteSupabase.rpc("iniciar_producao_item_pedido", { p_pedido_id: pedido.id, p_produto_id: produtoId, p_prazo_producao: prazoProducao })
             : await clienteSupabase.rpc("iniciar_producao_pedido", { p_pedido_id: pedido.id, p_prazo_producao: prazoProducao });
         if (error) {
             console.error(error);
             elementos.mensagemEntrega.textContent = error.message || "Não foi possível iniciar a produção.";
+            elementos.botaoConfirmarData.disabled = false;
             return;
         }
+        itensAprovados.forEach((item) => {
+            item.situacao = "em_producao";
+            item.producaoPrevista = prazoProducao;
+        });
+        pedido.producaoPrevista = prazoProducao;
         fecharModal(elementos.modalEntrega);
         fecharModal(elementos.modalAnalisarPedido);
+        if (detalhesAbertos) abrirModalDetalhesPedido(pedido.id);
         await carregarDadosSupabase();
+        if (detalhesAbertos) abrirModalDetalhesPedido(pedido.id);
         notificar("Produção iniciada. Registre a entrada produzida no estoque antes de criar a próxima remessa.");
         return;
     }
@@ -3263,6 +3273,7 @@ async function iniciarProducaoPedido(pedidoId, prazoProducao, produtoId = "") {
     fecharModal(elementos.modalEntrega);
     fecharModal(elementos.modalAnalisarPedido);
     renderizarTudo();
+    if (detalhesAbertos) abrirModalDetalhesPedido(pedido.id);
     notificar("Produção iniciada e prazo informado à filial.");
 }
 
@@ -3457,7 +3468,7 @@ function abrirModalDetalhesPedido(pedidoId) {
             <article class="item-detalhes-pedido">
                 <div>
                     <strong>${escaparHTML(item.produtoNome)}</strong>
-                    ${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}
+                    ${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true, mostrarDisponivelCD: !estaNoPortalFilial() })}
                     <span>${escaparHTML(descricao)}</span>
                 </div>
                 <div class="acoes-item-detalhes">
