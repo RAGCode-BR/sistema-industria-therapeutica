@@ -108,6 +108,10 @@ const elementos = {
     relatorioCalendarioMes: document.querySelector("#relatorio-calendario-mes"),
     relatorioCalendarioSaidas: document.querySelector("#relatorio-calendario-saidas"),
     relatorioCalendarioTotal: document.querySelector("#relatorio-calendario-total"),
+    modalSaidasCalendario: document.querySelector("#modal-saidas-calendario"),
+    tituloModalSaidasCalendario: document.querySelector("#titulo-modal-saidas-calendario"),
+    resumoModalSaidasCalendario: document.querySelector("#resumo-modal-saidas-calendario"),
+    listaModalSaidasCalendario: document.querySelector("#lista-modal-saidas-calendario"),
     relatorioPeriodo: document.querySelector("#relatorio-periodo"),
     relatorioDataInicial: document.querySelector("#relatorio-data-inicial"),
     relatorioDataFinal: document.querySelector("#relatorio-data-final"),
@@ -2441,11 +2445,44 @@ function renderizarCalendarioSaidas() {
         const chave = `${mesSelecionado}-${String(dia).padStart(2, "0")}`;
         const registro = saidasPorDia.get(dia);
         const produtos = registro ? [...registro.produtos.values()].sort((a, b) => b.quantidade - a.quantidade || a.nome.localeCompare(b.nome, "pt-BR")) : [];
-        return `<article class="dia-calendario ${registro ? "tem-saida" : ""} ${chave === hoje ? "hoje" : ""}"><time datetime="${chave}">${dia}</time>${registro ? `<strong>${formatarNumero(registro.quantidade)} <small>un.</small></strong><div class="produtos-dia-calendario">${produtos.map((produto) => `<span title="${escaparHTML(produto.nome)}: ${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}"><b>${escaparHTML(produto.nome)}</b><em>${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</em></span>`).join("")}</div>` : ""}</article>`;
+        if (!registro) return `<article class="dia-calendario ${chave === hoje ? "hoje" : ""}"><time datetime="${chave}">${dia}</time></article>`;
+        return `<button type="button" class="dia-calendario tem-saida ${chave === hoje ? "hoje" : ""}" data-acao="ver-saidas-calendario" data-data-saidas="${chave}"><time datetime="${chave}">${dia}</time><strong>${formatarNumero(registro.quantidade)} <small>un.</small></strong><small class="ver-itens-calendario">Ver produtos</small></button>`;
     }).join("");
 
     elementos.relatorioCalendarioSaidas.innerHTML = `<p class="titulo-mes-calendario">${escaparHTML(nomeMes)}</p><div class="semana-calendario">${cabecalhos.map((dia) => `<span>${dia}</span>`).join("")}</div><div class="dias-calendario">${celulasVazias}${dias}</div>`;
     elementos.relatorioCalendarioTotal.textContent = totalUnidades ? `${formatarNumero(totalUnidades)} unidades no mês` : "Sem saídas no mês selecionado";
+}
+
+function abrirModalSaidasCalendario(data) {
+    if (!elementos.modalSaidasCalendario || !/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
+    const saidas = new Map();
+
+    estado.movimentacoes
+        .filter((movimentacao) => ["saida", "transferencia"].includes(movimentacao.tipo))
+        .filter((movimentacao) => dataLocalISO(new Date(movimentacao.criadoEm)) === data)
+        .filter((movimentacao) => {
+            const produto = buscarProduto(movimentacao.produtoId);
+            return (!filtrosRelatorio.filialId || movimentacao.filialId === filtrosRelatorio.filialId)
+                && (!filtrosRelatorio.produtoId || movimentacao.produtoId === filtrosRelatorio.produtoId)
+                && (!filtrosRelatorio.categoria || produto?.categoria === filtrosRelatorio.categoria);
+        })
+        .forEach((movimentacao) => {
+            const produto = buscarProduto(movimentacao.produtoId);
+            const registro = saidas.get(movimentacao.produtoId) || {
+                nome: movimentacao.produtoNome || produto?.nome || "Produto não identificado",
+                unidade: movimentacao.unidade || produto?.unidade || "Unidade",
+                quantidade: 0
+            };
+            registro.quantidade += movimentacao.quantidade;
+            saidas.set(movimentacao.produtoId, registro);
+        });
+
+    const produtos = [...saidas.values()].sort((a, b) => b.quantidade - a.quantidade || a.nome.localeCompare(b.nome, "pt-BR"));
+    const total = produtos.reduce((soma, produto) => soma + produto.quantidade, 0);
+    elementos.tituloModalSaidasCalendario.textContent = `Saídas em ${formatarDataSimples(data)}`;
+    elementos.resumoModalSaidasCalendario.textContent = `${formatarNumero(total)} unidade(s) saíram do CD nesta data.`;
+    elementos.listaModalSaidasCalendario.innerHTML = produtos.map((produto) => `<article><strong>${escaparHTML(produto.nome)}</strong><span>${formatarNumero(produto.quantidade)} ${escaparHTML(produto.unidade)}</span></article>`).join("") || "<p class=\"resumo-vazio\">Nenhuma saída encontrada.</p>";
+    abrirModal(elementos.modalSaidasCalendario);
 }
 
 function renderizarRelatorios() {
@@ -3913,6 +3950,9 @@ function lidarComAcao(acao, elemento) {
         case "relatorio-filtrar-produto":
             filtrosRelatorio.produtoId = elemento.dataset.produtoId || "";
             renderizarRelatorios();
+            break;
+        case "ver-saidas-calendario":
+            abrirModalSaidasCalendario(elemento.dataset.dataSaidas || "");
             break;
         case "relatorio-ver-pedido": {
             const pedido = estado.pedidos.find((item) => item.id === elemento.dataset.pedidoId);

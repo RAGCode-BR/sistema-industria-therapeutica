@@ -456,14 +456,17 @@
                         <article class="quadro"><div class="titulo-quadro"><div><h2>Status dos pedidos</h2><p>Clique em um status para filtrar</p></div></div><div id="relatorio-status-grafico" class="grafico-status"></div></article>
                     </section>
 
-                    <section class="quadro calendario-saidas-relatorio">
-                        <div class="titulo-quadro">
-                            <div><h2>Calendário de saídas</h2><p>Unidades que saíram do CD por dia, incluindo expedições para as filiais.</p></div>
-                            <label class="seletor-mes-calendario"><span>Mês</span><input type="month" id="relatorio-calendario-mes"></label>
+                    <details class="quadro calendario-saidas-relatorio calendario-saidas-dobravel">
+                        <summary><div><h2>Calendário de saídas</h2><p>Consulte as unidades que saíram do CD por mês.</p></div></summary>
+                        <div class="conteudo-calendario-saidas">
+                            <div class="titulo-quadro">
+                                <p>Inclui saídas manuais e expedições para as filiais.</p>
+                                <label class="seletor-mes-calendario"><span>Mês</span><input type="month" id="relatorio-calendario-mes"></label>
+                            </div>
+                            <div class="legenda-calendario-saidas"><span><i></i>Saídas e expedições registradas</span><span id="relatorio-calendario-total"></span></div>
+                            <div class="calendario-saidas" id="relatorio-calendario-saidas" aria-live="polite"></div>
                         </div>
-                        <div class="legenda-calendario-saidas"><span><i></i>Saídas e expedições registradas</span><span id="relatorio-calendario-total"></span></div>
-                        <div class="calendario-saidas" id="relatorio-calendario-saidas" aria-live="polite"></div>
-                    </section>
+                    </details>
 
                     <section class="painel-duplo relatorio-listas">
                         <article class="quadro"><div class="titulo-quadro"><div><h2>Produtos mais solicitados</h2><p>Demanda consolidada por produto</p></div><select id="relatorio-limite-produtos" aria-label="Quantidade de produtos"><option value="5">Top 5</option><option value="10">Top 10</option></select></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Solicitado</th><th>Enviado</th><th>Pendente</th><th>Pedidos</th></tr></thead><tbody id="relatorio-produtos-solicitados"></tbody></table></div></article>
@@ -1052,6 +1055,18 @@
             <div class="acoes-formulario">
                 <button type="button" class="botao-secundario" data-fechar-modal="modal-detalhes-pedido">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-saidas-calendario" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-saidas-calendario" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-saidas-calendario">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Saídas do CD</p><h2 id="titulo-modal-saidas-calendario">Saídas do dia</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-saidas-calendario" aria-label="Fechar">×</button>
+            </div>
+            <p class="texto-apoio" id="resumo-modal-saidas-calendario"></p>
+            <div class="lista-saidas-calendario" id="lista-modal-saidas-calendario"></div>
+            <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-saidas-calendario">Fechar</button></div>
         </div>
     </div>
 
