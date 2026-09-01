@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#e87861">
-    <title>Sistema de Estoque - Therapeutica</title>
-    <link rel="icon" type="image/png" href="./assets/img/therapeutica-logo-01.png">
-    <link rel="apple-touch-icon" href="./assets/img/therapeutica-logo-01.png">
+    <title>Aroma Thera - Sistema</title>
+    <link rel="icon" type="image/png" href="./assets/img/aromathera-sem-fundo.png">
+    <link rel="apple-touch-icon" href="./assets/img/aromathera-sem-fundo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     <div class="sistema">
         <aside class="menu-lateral" aria-label="Menu principal">
             <div class="logo">
-                <img class="logo-nav" src="./assets/img/therapeutica-logo-01.png">
+                <img class="logo-nav" src="./assets/img/aromathera-sem-fundo.png" alt="Aromathera">
             </div>
 
             <nav class="menu-navegacao" id="menu-navegacao">
@@ -60,7 +60,7 @@
                 <button class="botao-cabecalho-mobile" type="button" id="botao-menu-mobile" aria-controls="menu-navegacao" aria-expanded="false" aria-label="Abrir menu de navegacao">
                     <span class="icone icone-menu" aria-hidden="true"></span>
                 </button>
-                <img class="logo-mobile" src="./assets/img/therapeutica-logo-01.png" alt="Therapeutica Pharmacia">
+                <img class="logo-mobile" src="./assets/img/aromathera-sem-fundo.png" alt="Aromathera">
                 <div class="acoes-cabecalho-mobile">
                     <button class="botao-cabecalho-mobile" type="button" id="botao-seletor-mobile" aria-controls="painel-seletor-mobile" aria-expanded="false" aria-label="Selecionar centro de distribuicao ou filial">
                         <span class="icone icone-filiais" aria-hidden="true"></span>
@@ -91,6 +91,11 @@
                     <h1 id="titulo-pagina">Dashboard</h1>
                 </div>
                 <div class="acoes-cabecalho">
+                    <button class="botao-em-producao-cabecalho" id="botao-em-producao-cabecalho" type="button" data-acao="ver-itens-em-producao" hidden>
+                        <span class="sinal-em-producao" aria-hidden="true"></span>
+                        <span>Em produção</span>
+                        <strong id="quantidade-em-producao-cabecalho">0</strong>
+                    </button>
                     <label class="seletor-portal" for="seletor-portal">
                         <span>Visualização</span>
                         <select id="seletor-portal">
@@ -388,6 +393,7 @@
                                 <option value="com_item_pendente">Aguardando análise</option>
                                 <option value="aprovado">Aprovado · aguardando expedição</option>
                                 <option value="em_producao">Em produção</option>
+                                <option value="agendado_envio">Envio agendado</option>
                                 <option value="envio_parcial">Envio parcial</option>
                                 <option value="em_transito">Em trânsito · aguardando recebimento</option>
                                 <option value="finalizado">Finalizado</option>
@@ -400,6 +406,7 @@
                                 <option value="pendente">Aguardando análise</option>
                                 <option value="aprovado">Aprovado · aguardando expedição</option>
                                 <option value="em_producao">Em produção</option>
+                                <option value="agendado_envio">Envio agendado</option>
                                 <option value="envio_parcial">Envio parcial</option>
                                 <option value="em_transito">Em trânsito · aguardando recebimento</option>
                                 <option value="recebido">Recebido</option>
@@ -437,7 +444,7 @@
                         <label><span>De</span><input type="date" id="relatorio-data-inicial" disabled></label>
                         <label><span>Até</span><input type="date" id="relatorio-data-final" disabled></label>
                         <label><span>Filial</span><select id="relatorio-filial"><option value="">Todas as filiais</option></select></label>
-                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="pendente">Aguardando análise</option><option value="aprovado">Aprovado · aguardando expedição</option><option value="em_producao">Em produção</option><option value="envio_parcial">Envio parcial</option><option value="em_transito">Em trânsito · aguardando recebimento</option><option value="finalizado">Finalizado</option><option value="recusado">Recusado</option></select></label>
+                        <label><span>Status</span><select id="relatorio-status"><option value="">Todos os status</option><option value="com_item_pendente">Aguardando análise</option><option value="aprovado">Aprovado · aguardando expedição</option><option value="em_producao">Em produção</option><option value="agendado_envio">Envio agendado</option><option value="envio_parcial">Envio parcial</option><option value="em_transito">Em trânsito · aguardando recebimento</option><option value="finalizado">Finalizado</option><option value="recusado">Recusado</option></select></label>
                         <label><span>Produto</span><select id="relatorio-produto"><option value="">Todos os produtos</option></select></label>
                         <label><span>Categoria</span><select id="relatorio-categoria"><option value="">Todas as categorias</option></select></label>
                         <button type="button" class="botao-secundario botao-limpar-relatorios" id="botao-limpar-relatorios"><span class="icone icone-limpar" aria-hidden="true"></span>Limpar filtros</button>
@@ -578,9 +585,10 @@
                         <label for="filtro-status-meus-pedidos">Filtrar por status
                             <select id="filtro-status-meus-pedidos">
                                 <option value="">Todos os status</option>
-                                <option value="pendente">Aguardando análise</option>
+                                <option value="com_item_pendente">Aguardando análise</option>
                                 <option value="aprovado">Aprovado · aguardando expedição</option>
                                 <option value="em_producao">Em produção</option>
+                                <option value="agendado_envio">Envio agendado</option>
                                 <option value="envio_parcial">Envio parcial</option>
                                 <option value="em_transito">Em trânsito · aguardando recebimento</option>
                                 <option value="finalizado">Finalizado</option>
@@ -925,6 +933,20 @@
         </div>
     </div>
 
+    <div class="modal" id="modal-cancelar-remessa" aria-hidden="true">
+        <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-cancelar-remessa">
+            <div class="modal-cabecalho"><div><p class="subtitulo-modal">Expedição do CD</p><h2 id="titulo-modal-cancelar-remessa">Cancelar remessa</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-cancelar-remessa" aria-label="Fechar">×</button></div>
+            <form id="formulario-cancelar-remessa" class="formulario-modal">
+                <input type="hidden" id="cancelar-remessa-id"><input type="hidden" id="cancelar-remessa-pedido-id"><input type="hidden" id="cancelar-remessa-pedido-completo">
+                <p class="texto-apoio" id="resumo-cancelar-remessa"></p>
+                <label for="motivo-cancelar-remessa">Motivo do cancelamento</label>
+                <textarea id="motivo-cancelar-remessa" rows="4" maxlength="500" placeholder="Explique o motivo para o histórico do pedido." required></textarea>
+                <p class="mensagem-formulario" id="mensagem-cancelar-remessa" aria-live="polite"></p>
+                <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-cancelar-remessa">Voltar</button><button type="submit" class="botao-perigo"><span class="icone icone-recusar" aria-hidden="true"></span>Cancelar remessa</button></div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal" id="modal-categoria" aria-hidden="true">
         <div class="modal-conteudo modal-conteudo-pequeno" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-categoria">
             <div class="modal-cabecalho">
@@ -1094,6 +1116,23 @@
             <p class="texto-apoio" id="resumo-modal-saidas-calendario"></p>
             <div class="lista-saidas-calendario" id="lista-modal-saidas-calendario"></div>
             <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-saidas-calendario">Fechar</button></div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-itens-em-producao" aria-hidden="true">
+        <div class="modal-conteudo modal-itens-em-producao-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-itens-em-producao">
+            <div class="modal-cabecalho">
+                <div><p class="subtitulo-modal">Acompanhamento do CD</p><h2 id="titulo-modal-itens-em-producao">Itens em produção</h2></div>
+                <button class="botao-fechar" type="button" data-fechar-modal="modal-itens-em-producao" aria-label="Fechar">×</button>
+            </div>
+            <p class="texto-apoio" id="resumo-modal-itens-em-producao"></p>
+            <div class="tabela-responsiva tabela-itens-em-producao">
+                <table>
+                    <thead><tr><th>Produto</th><th>Em produção</th><th>Previsão</th><th>Pedido</th><th>Filial</th><th>Ação</th></tr></thead>
+                    <tbody id="tabela-modal-itens-em-producao"></tbody>
+                </table>
+            </div>
+            <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-itens-em-producao">Fechar</button></div>
         </div>
     </div>
 

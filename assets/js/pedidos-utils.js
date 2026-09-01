@@ -57,7 +57,10 @@
 
     function statusOperacionalPedido(pedido, remessas) {
         const resumo = calcularAtendimentoPedido(pedido, remessas);
-        if (resumo.totalmenteRecebido) return "recebido";
+        const situacoesItens = (Array.isArray(pedido?.itens) ? pedido.itens : []).map((item) => item.situacao || pedido?.situacao || "pendente");
+        if (situacoesItens.length && situacoesItens.every((situacao) => situacao === "recusado")) return "recusado";
+        if (situacoesItens.length && situacoesItens.every((situacao) => situacao === "recebido" || situacao === "recusado")) return "finalizado";
+        if (resumo.totalmenteRecebido) return "finalizado";
         if (pedido?.situacao === "em_producao") return "em_producao";
         if (resumo.itens.some((item) => item.emTransito > 0)) return "em_transito";
         if (resumo.enviado > 0 || pedido?.situacao === "aprovado") return "aprovado";

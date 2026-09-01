@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { calcularResumoPedido, calcularProducaoNecessaria } = require("../assets/js/relatorios-utils.js");
-const { calcularAtendimentoPedido, quantidadeMaximaRemessa } = require("../assets/js/pedidos-utils.js");
+const { calcularAtendimentoPedido, statusOperacionalPedido, quantidadeMaximaRemessa } = require("../assets/js/pedidos-utils.js");
 
 function pedido(itens) {
     return { id: "pedido-teste", situacao: "pendente", itens: itens.map(([produtoId, quantidadeSolicitada]) => ({ produtoId, quantidadeSolicitada })) };
@@ -59,5 +59,18 @@ atendimento = calcularAtendimentoPedido(pedido([["a", 100]]), [remessa("r1", "em
 assert.deepEqual([atendimento.enviado, atendimento.pendente], [100, 0]);
 
 assert.equal(quantidadeMaximaRemessa(pedido([["a", 100]]), [remessa("r1", "em_transito", [["a", 80]])], "a", 50), 20);
+
+const pedidoRecebido = pedido([["a", 10]]);
+pedidoRecebido.itens[0].situacao = "recebido";
+assert.equal(statusOperacionalPedido(pedidoRecebido, [remessa("recebida", "recebida", [["a", 10]])]), "finalizado");
+
+const pedidoMistoFinalizado = pedido([["a", 10], ["b", 5]]);
+pedidoMistoFinalizado.itens[0].situacao = "recebido";
+pedidoMistoFinalizado.itens[1].situacao = "recusado";
+assert.equal(statusOperacionalPedido(pedidoMistoFinalizado, [remessa("recebida", "recebida", [["a", 10]])]), "finalizado");
+
+const pedidoRecusado = pedido([["a", 10]]);
+pedidoRecusado.itens[0].situacao = "recusado";
+assert.equal(statusOperacionalPedido(pedidoRecusado, []), "recusado");
 
 console.log("Regras de relatório validadas.");

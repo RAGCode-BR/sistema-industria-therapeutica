@@ -78,6 +78,8 @@ const elementos = {
     seletorPortal: document.querySelector("#seletor-portal"),
     contextoPortal: document.querySelector("#contexto-portal"),
     tituloPagina: document.querySelector("#titulo-pagina"),
+    botaoEmProducaoCabecalho: document.querySelector("#botao-em-producao-cabecalho"),
+    quantidadeEmProducaoCabecalho: document.querySelector("#quantidade-em-producao-cabecalho"),
     toast: document.querySelector("#toast"),
     indicadorProdutos: document.querySelector("#indicador-produtos"),
     indicadorUnidades: document.querySelector("#indicador-unidades"),
@@ -112,6 +114,9 @@ const elementos = {
     tituloModalSaidasCalendario: document.querySelector("#titulo-modal-saidas-calendario"),
     resumoModalSaidasCalendario: document.querySelector("#resumo-modal-saidas-calendario"),
     listaModalSaidasCalendario: document.querySelector("#lista-modal-saidas-calendario"),
+    modalItensEmProducao: document.querySelector("#modal-itens-em-producao"),
+    resumoModalItensEmProducao: document.querySelector("#resumo-modal-itens-em-producao"),
+    tabelaModalItensEmProducao: document.querySelector("#tabela-modal-itens-em-producao"),
     relatorioPeriodo: document.querySelector("#relatorio-periodo"),
     relatorioDataInicial: document.querySelector("#relatorio-data-inicial"),
     relatorioDataFinal: document.querySelector("#relatorio-data-final"),
@@ -231,6 +236,14 @@ const elementos = {
     resumoEncerrarSaldoItem: document.querySelector("#resumo-encerrar-saldo-item"),
     motivoEncerrarSaldoItem: document.querySelector("#motivo-encerrar-saldo-item"),
     mensagemEncerrarSaldoItem: document.querySelector("#mensagem-encerrar-saldo-item"),
+    modalCancelarRemessa: document.querySelector("#modal-cancelar-remessa"),
+    formularioCancelarRemessa: document.querySelector("#formulario-cancelar-remessa"),
+    cancelarRemessaId: document.querySelector("#cancelar-remessa-id"),
+    cancelarRemessaPedidoId: document.querySelector("#cancelar-remessa-pedido-id"),
+    cancelarRemessaPedidoCompleto: document.querySelector("#cancelar-remessa-pedido-completo"),
+    resumoCancelarRemessa: document.querySelector("#resumo-cancelar-remessa"),
+    motivoCancelarRemessa: document.querySelector("#motivo-cancelar-remessa"),
+    mensagemCancelarRemessa: document.querySelector("#mensagem-cancelar-remessa"),
     modalRemessa: document.querySelector("#modal-remessa"),
     formularioRemessa: document.querySelector("#formulario-remessa"),
     tituloModalRemessa: document.querySelector("#titulo-modal-remessa"),
@@ -688,11 +701,13 @@ function normalizarMovimentacao(movimentacao) {
 }
 
 function normalizarPedido(pedido) {
-    const situacoesValidas = ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito", "recebido", "finalizado", "recusado"];
+    const situacoesValidasPedido = ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito", "recebido", "finalizado", "recusado"];
+    const situacoesValidasItem = ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito", "recebido", "recusado"];
     const statusRecebido = pedido?.situacao ?? pedido?.status;
-    const situacao = situacoesValidas.includes(statusRecebido)
+    const situacao = situacoesValidasPedido.includes(statusRecebido)
         ? statusRecebido
         : "pendente";
+    const situacaoPadraoItem = situacao === "finalizado" ? "recebido" : situacao;
 
     const itensRecebidos = Array.isArray(pedido?.itens) ? pedido.itens : [pedido];
     const itens = itensRecebidos
@@ -703,7 +718,7 @@ function normalizarPedido(pedido) {
             estoqueInformado: numeroInteiroNaoNegativo(item?.estoqueInformado ?? item?.reportedStock ?? pedido?.estoqueInformado ?? pedido?.reportedStock),
             quantidadeSolicitada: numeroInteiroNaoNegativo(item?.quantidadeSolicitada ?? item?.requestedQuantity ?? pedido?.quantidadeSolicitada ?? pedido?.requestedQuantity),
             observacao: String(item?.observacao ?? item?.note ?? ""),
-            situacao: situacoesValidas.includes(item?.situacao) ? item.situacao : situacao,
+            situacao: situacoesValidasItem.includes(item?.situacao) ? item.situacao : situacaoPadraoItem,
             producaoPrevista: item?.producaoPrevista ?? item?.producao_prevista ?? "",
             observacaoMatriz: String(item?.observacaoMatriz ?? "")
         }))
@@ -1059,7 +1074,7 @@ async function carregarDadosSupabase() {
         estoqueFiliais: Object.fromEntries(estoques.data.map((item) => [chaveEstoqueFilial(item.filial_id, item.produto_id), { quantidade: item.quantidade, atualizadoEm: item.atualizado_em }])),
         movimentacoes: movimentacoes.data.map((movimentacao) => {
             const produto = produtosPorId.get(movimentacao.produto_id);
-            return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", criadoEm: movimentacao.criado_em };
+            return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", remessaId: movimentacao.remessa_id || "", criadoEm: movimentacao.criado_em };
         }),
         remessas: remessasVisiveis.map(normalizarRemessa),
         reservasProducao: reservasVisiveis.map(normalizarReservaProducao),
@@ -1251,7 +1266,7 @@ function itemCorrespondeStatus(pedido, item, status) {
 }
 
 function pedidosAbertos() {
-    return estado.pedidos.filter((pedido) => ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito"].includes(pedido.situacao));
+    return estado.pedidos.filter((pedido) => ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito"].includes(situacaoDoPedido(pedido)));
 }
 
 function produtosComEstoqueBaixo() {
@@ -1296,8 +1311,10 @@ function classeTipoMovimentacao(tipo) {
 function textoSituacaoPedido(situacao) {
     return {
         pendente: "Pendente",
+        com_item_pendente: "Aguardando análise",
         em_producao: "Em produção",
         agendado_envio: "Envio agendado",
+        envio_parcial: "Envio parcial",
         em_transito: "A caminho",
         recebido: "Recebido",
         finalizado: "Finalizado",
@@ -1575,6 +1592,7 @@ function navegar(pagina, opcoes = {}) {
     }
 
     paginaAtual = pagina in titulosPaginas ? pagina : "dashboard";
+    document.body.classList.toggle("portal-filial-ativo", estaNoPortalFilial());
 
     if (opcoes.tipoMovimentacao) {
         tipoMovimentacaoAtual = opcoes.tipoMovimentacao;
@@ -1787,6 +1805,72 @@ function renderizarProdutos() {
             <button type="button" class="botao-secundario" data-pagina-produto="proxima" ${paginaProdutosAtual === totalPaginas ? "disabled" : ""}>Próxima</button>
         </div>
     ` : "";
+}
+
+function itensEmProducaoAtivos() {
+    return (Array.isArray(estado.reservasProducao) ? estado.reservasProducao : [])
+        .map((reserva) => {
+            const pedido = estado.pedidos.find((registro) => registro.id === reserva.pedidoId);
+            const item = pedido && itensDoPedido(pedido).find((registro) => registro.produtoId === reserva.produtoId);
+            const produto = buscarProduto(reserva.produtoId);
+            const quantidade = numeroInteiroNaoNegativo(reserva.quantidade);
+            if (!pedido || !item || !produto || quantidade <= 0 || ["recebido", "recusado"].includes(situacaoDoItemPedido(item, pedido))) return null;
+            return {
+                pedido,
+                item,
+                produto,
+                filial: buscarFilial(pedido.filialId),
+                quantidade,
+                previsao: item.producaoPrevista || pedido.producaoPrevista || ""
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+            const previsaoA = a.previsao || "9999-12-31";
+            const previsaoB = b.previsao || "9999-12-31";
+            return previsaoA.localeCompare(previsaoB)
+                || a.produto.nome.localeCompare(b.produto.nome, "pt-BR")
+                || Number(a.pedido.numeroPedido || 0) - Number(b.pedido.numeroPedido || 0);
+        });
+}
+
+function atualizarBotaoProducaoCabecalho() {
+    if (!elementos.botaoEmProducaoCabecalho) return;
+    const visivel = usuarioEhCD() && !estaNoPortalFilial();
+    elementos.botaoEmProducaoCabecalho.hidden = !visivel;
+    if (!visivel) return;
+
+    const registros = itensEmProducaoAtivos();
+    const totalUnidades = registros.reduce((total, registro) => total + registro.quantidade, 0);
+    elementos.quantidadeEmProducaoCabecalho.textContent = formatarNumero(registros.length);
+    elementos.botaoEmProducaoCabecalho.classList.toggle("sem-itens", registros.length === 0);
+    elementos.botaoEmProducaoCabecalho.setAttribute("aria-label", registros.length
+        ? `Ver ${registros.length} item(ns), totalizando ${totalUnidades} unidade(s) em produção`
+        : "Ver itens em produção; nenhuma produção programada");
+}
+
+function abrirModalItensEmProducao() {
+    if (!usuarioEhCD() || estaNoPortalFilial() || !elementos.modalItensEmProducao) return;
+    const registros = itensEmProducaoAtivos();
+    const totalUnidades = registros.reduce((total, registro) => total + registro.quantidade, 0);
+    const totalPedidos = new Set(registros.map((registro) => registro.pedido.id)).size;
+
+    elementos.resumoModalItensEmProducao.textContent = registros.length
+        ? `${formatarNumero(totalUnidades)} unidade(s) de ${formatarNumero(registros.length)} item(ns) estão em produção para ${formatarNumero(totalPedidos)} pedido(s).`
+        : "Não há itens com produção programada neste momento.";
+    elementos.tabelaModalItensEmProducao.innerHTML = registros.length
+        ? registros.map((registro) => `
+            <tr>
+                <td data-label="Produto"><strong>${escaparHTML(registro.produto.nome)}</strong><span class="detalhe-celula">${escaparHTML(registro.produto.codigo || registro.produto.categoria || "")}</span></td>
+                <td data-label="Em produção"><strong class="quantidade-producao">${formatarNumero(registro.quantidade)} ${escaparHTML(registro.produto.unidade)}</strong></td>
+                <td data-label="Previsão">${registro.previsao ? formatarDataSimples(registro.previsao) : "Não informada"}</td>
+                <td data-label="Pedido"><span class="codigo-pedido">${numeroPedidoParaExibicao(registro.pedido)}</span></td>
+                <td data-label="Filial">${escaparHTML(registro.filial?.nome || "Filial não identificada")}</td>
+                <td data-label="Ação"><button type="button" class="botao-acao" data-acao="consultar-pedido" data-pedido-id="${escaparHTML(registro.pedido.id)}">Ver pedido</button></td>
+            </tr>
+        `).join("")
+        : "<tr><td colspan=\"6\" class=\"tabela-vazia\">Nenhum item em produção.</td></tr>";
+    abrirModal(elementos.modalItensEmProducao);
 }
 
 function quantidadeDisponivelParaPedido(pedido, produtoId) {
@@ -2025,6 +2109,25 @@ function resumoQuantidadesItemPedido(pedido, item, opcoes = {}) {
     </div>`;
 }
 
+function statusExibicaoItemPedido(pedido, item) {
+    const atendimento = window.PedidosUtils.calcularAtendimentoPedido(pedido, estado.remessas).itens
+        .find((registro) => registro.produtoId === item.produtoId);
+    const situacao = situacaoDoItemPedido(item, pedido);
+    const enviado = atendimento?.enviado || 0;
+    const pendente = atendimento?.pendente || 0;
+
+    if (situacao === "recebido") {
+        return { texto: "Recebido", classe: classeSituacaoPedido(situacao), envioParcial: false, foiEnviado: true };
+    }
+    if (enviado > 0 && pendente > 0) {
+        return { texto: "Envio parcial", classe: "tipo-aprovado", envioParcial: true, foiEnviado: true };
+    }
+    if (enviado > 0) {
+        return { texto: "Enviado", classe: "tipo-aprovado", envioParcial: false, foiEnviado: true };
+    }
+    return { texto: textoSituacaoPedido(situacao), classe: classeSituacaoPedido(situacao), envioParcial: false, foiEnviado: false };
+}
+
 function renderizarPedidos() {
     const statusSelecionado = elementos.filtroStatusPedidos.value;
     const statusItemSelecionado = elementos.filtroStatusItensPedidos.value;
@@ -2049,12 +2152,15 @@ function renderizarPedidos() {
             const envioParcial = atendimento.itens.some((item) => situacaoDoItemPedido(item, pedido) !== "recusado" && item.enviado > 0 && item.pendente > 0);
             const producao = pedido.producaoPrevista ? `Prazo de produção: ${formatarDataSimples(pedido.producaoPrevista)}` : "";
             const entrega = pedido.entregaPrevista ? `Entrega prevista: ${formatarDataSimples(pedido.entregaPrevista)}` : "";
-            const listaItens = renderizarItensAgrupadosPorCategoria(itensVisiveis, (item) => `
+            const listaItens = renderizarItensAgrupadosPorCategoria(itensVisiveis, (item) => {
+                const statusItem = statusExibicaoItemPedido(pedido, item);
+                return `
                 <details class="item-pedido-resumo item-pedido-dobravel">
-                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoDoItemPedido(item, pedido))}">${textoSituacaoPedido(situacaoDoItemPedido(item, pedido))}</span></summary>
+                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${statusItem.classe}">${statusItem.texto}</span></summary>
                     <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true })}</div>
                 </details>
-            `, "grupo-itens-categoria-resumo");
+            `;
+            }, "grupo-itens-categoria-resumo");
             const haItensPendentes = itens.some((item) => (item.situacao || pedido.situacao) === "pendente");
             const itensPendentesDeEnvio = atendimento.itens.filter((item) => item.pendente > 0 && situacaoDoItemPedido(item, pedido) !== "recusado");
             const existeSaldoParaExpedir = itensPendentesDeEnvio.some((item) => quantidadeDisponivelParaPedido(pedido, item.produtoId) > 0);
@@ -2333,6 +2439,23 @@ function renderizarFiliais() {
     }).join("");
 }
 
+function referenciaRemessaParaHistorico(movimentacao) {
+    if (!movimentacao.remessaId) return "";
+
+    const remessa = estado.remessas.find((registro) => registro.id === movimentacao.remessaId);
+    const pedido = estado.pedidos.find((registro) => registro.id === (remessa?.pedidoId || movimentacao.pedidoId));
+    if (!remessa || !pedido) return "Remessa vinculada";
+
+    const remessasDoPedido = estado.remessas
+        .filter((registro) => registro.pedidoId === pedido.id)
+        .sort((a, b) => {
+            const diferenca = new Date(a.enviadaEm || a.criadaEm || 0) - new Date(b.enviadaEm || b.criadaEm || 0);
+            return diferenca || String(a.id).localeCompare(String(b.id));
+        });
+    const numeroRemessa = remessasDoPedido.findIndex((registro) => registro.id === remessa.id) + 1;
+    return `Pedido ${escaparHTML(numeroPedidoParaExibicao(pedido))} · Remessa ${numeroRemessa}`;
+}
+
 function renderizarHistorico() {
     const busca = elementos.buscaHistorico.value.trim().toLocaleLowerCase("pt-BR");
     const tipo = elementos.filtroHistorico.value;
@@ -2348,6 +2471,7 @@ function renderizarHistorico() {
                 ? `Saldo: ${formatarNumero(movimentacao.saldoAntes)} → ${formatarNumero(movimentacao.saldoDepois)}`
                 : "Saldo anterior não registrado";
             const destino = filial ? `Destino: ${filial.nome}` : movimentacao.observacao || "Sem observação";
+            const referenciaRemessa = referenciaRemessaParaHistorico(movimentacao);
 
             return `
                 <tr>
@@ -2355,7 +2479,7 @@ function renderizarHistorico() {
                     <td data-label="Tipo"><span class="selo-tipo ${classeTipoMovimentacao(movimentacao.tipo)}">${textoTipoMovimentacao(movimentacao.tipo)}</span></td>
                     <td data-label="Produto"><strong>${escaparHTML(movimentacao.produtoNome)}</strong><span class="detalhe-celula">${saldo}</span></td>
                     <td data-label="Quantidade">${formatarNumero(movimentacao.quantidade)} ${escaparHTML(movimentacao.unidade)}</td>
-                    <td data-label="Destino ou observacao">${escaparHTML(destino)}${movimentacao.observacao && filial ? `<span class="detalhe-celula">${escaparHTML(movimentacao.observacao)}</span>` : ""}</td>
+                    <td data-label="Destino ou observacao">${escaparHTML(destino)}${referenciaRemessa ? `<span class="detalhe-celula">${referenciaRemessa}</span>` : movimentacao.observacao && filial ? `<span class="detalhe-celula">${escaparHTML(movimentacao.observacao)}</span>` : ""}</td>
                 </tr>
             `;
         }).join("")
@@ -2451,7 +2575,7 @@ function metricasDoPedido(pedido) {
         completo: atendimento.totalmenteEnviado, parcial: atendimento.parcial,
         primeiroEnvio: atendimento.primeiroEnvio, ultimoEnvio: atendimento.ultimoEnvio,
         completamenteRecebido: atendimento.totalmenteRecebido,
-        prazo, situacao: window.PedidosUtils.statusOperacionalPedido(pedido, estado.remessas)
+        prazo, situacao: situacaoDoPedido(pedido)
     };
 }
 
@@ -2470,7 +2594,7 @@ function pedidosFiltradosRelatorio(intervalo = intervaloRelatorio()) {
             return (!filtrosRelatorio.produtoId || item.produtoId === filtrosRelatorio.produtoId)
                 && (!filtrosRelatorio.categoria || produto?.categoria === filtrosRelatorio.categoria);
         });
-        return itens.length > 0 && situacaoDoPedido(pedido) !== "recusado";
+        return itens.length > 0;
     }).map((pedido) => {
         const metricas = metricasDoPedido(pedido);
         const itens = metricas.itens.filter((item) => {
@@ -2500,6 +2624,7 @@ function preencherFiltrosRelatorio() {
     elementos.relatorioProduto.innerHTML = `<option value="">Todos os produtos</option>${produtosAtivos().map((produto) => `<option value="${escaparHTML(produto.id)}">${escaparHTML(produto.nome)}</option>`).join("")}`;
     elementos.relatorioCategoria.innerHTML = `<option value="">Todas as categorias</option>${categoriasProdutos.map((categoria) => `<option value="${escaparHTML(categoria)}">${escaparHTML(categoria)}</option>`).join("")}`;
     elementos.relatorioFilial.value = filialSelecionada;
+    elementos.relatorioStatus.value = filtrosRelatorio.status;
     elementos.relatorioProduto.value = filtrosRelatorio.produtoId;
     elementos.relatorioCategoria.value = filtrosRelatorio.categoria;
 }
@@ -2756,7 +2881,7 @@ function renderizarPortalFilial() {
 
     const statusSelecionado = elementos.filtroStatusMeusPedidos.value;
     const pedidosDaFilial = estado.pedidos.filter((pedido) => pedido.filialId === filial.id);
-    const abertos = pedidosDaFilial.filter((pedido) => ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito"].includes(pedido.situacao)).length;
+    const abertos = pedidosDaFilial.filter((pedido) => ["pendente", "aprovado", "em_producao", "agendado_envio", "em_transito"].includes(situacaoDoPedido(pedido))).length;
 
     elementos.tituloPortalFilial.textContent = `Portal Therapeutica · ${filial.nome}`;
     elementos.indicadorFilialPedidos.textContent = formatarNumero(abertos);
@@ -2778,6 +2903,7 @@ function renderizarPortalFilial() {
     const pedidosFiltrados = pedidosDaFilial.filter((pedido) => pedidoCorrespondeStatus(pedido, statusSelecionado));
     elementos.listaMeusPedidos.innerHTML = pedidosFiltrados.length
         ? pedidosFiltrados.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm)).map((pedido) => {
+            const situacaoPedido = situacaoDoPedido(pedido);
             const producao = pedido.producaoPrevista ? formatarDataSimples(pedido.producaoPrevista) : "";
             const envio = pedido.envioPrevisto ? formatarDataSimples(pedido.envioPrevisto) : "";
             const entrega = pedido.entregaPrevista ? formatarDataSimples(pedido.entregaPrevista) : "";
@@ -2788,15 +2914,16 @@ function renderizarPortalFilial() {
                             <h3>Pedido ${numeroPedidoParaExibicao(pedido)} · ${formatarData(pedido.criadoEm)}</h3>
                             <p>${pedido.observacao ? escaparHTML(pedido.observacao) : "Sem observação geral."}</p>
                         </div>
-                        <span class="selo-tipo ${classeSituacaoPedido(pedido.situacao)}">${textoSituacaoPedido(pedido.situacao)}</span>
+                        <span class="selo-tipo ${classeSituacaoPedido(situacaoPedido)}">${textoSituacaoPedido(situacaoPedido)}</span>
                     </div>
                     <div class="itens-pedido-resumo">
                         ${renderizarItensAgrupadosPorCategoria(itensDoPedido(pedido), (item) => {
                             const situacaoItem = item.situacao || pedido.situacao;
+                            const statusItem = statusExibicaoItemPedido(pedido, item);
                             const motivoRecusa = item.observacaoMatriz || pedido.observacaoMatriz || "Motivo não informado pelo CD.";
                             return `
                                 <details class="item-pedido-resumo item-pedido-dobravel">
-                                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${classeSituacaoPedido(situacaoItem)}">${textoSituacaoPedido(situacaoItem)}</span></summary>
+                                    <summary><strong>${escaparHTML(item.produtoNome)}</strong><span class="selo-tipo selo-status-item ${statusItem.classe}">${statusItem.texto}</span></summary>
                                     <div class="conteudo-item-dobravel">${resumoQuantidadesItemPedido(pedido, item, { mostrarEstoqueFilial: true, mostrarDisponivelCD: false })}${situacaoItem === "recusado" ? `<span class="motivo-recusa-pedido">Motivo da recusa: ${escaparHTML(motivoRecusa)}</span>` : ""}</div>
                                 </details>
                             `;
@@ -2889,6 +3016,7 @@ function selecionarProdutoDaBuscaPedido(produtoId) {
 }
 
 function renderizarTudo() {
+    atualizarBotaoProducaoCabecalho();
     renderizarIndicadores();
     renderizarDashboard();
     renderizarFiltroCategorias();
@@ -3680,10 +3808,13 @@ function abrirModalDetalhesPedido(pedidoId) {
         const saldoEncerrado = atendimentoItem?.encerrado || 0;
         const disponibilidade = quantidadeDisponivelParaPedido(pedido, item.produtoId);
         const envioParcial = foiEnviado && quantidadePendente > 0;
+        const statusItem = statusExibicaoItemPedido(pedido, item);
         // Produção é uma decisão posterior à aprovação do CD. Um pedido ainda
         // pendente pode indicar falta de saldo, mas não deve exibir uma ação que
         // permita programá-lo antes de ter sido analisado.
-        const itemAprovadoParaProducao = ["aprovado", "em_producao"].includes(situacao);
+        // Um envio parcial não encerra a necessidade de produção do saldo.
+        // O item em trânsito também pode ter o restante programado separadamente.
+        const itemAprovadoParaProducao = ["aprovado", "em_producao", "em_transito"].includes(situacao);
         const precisaProducao = usuarioEhCD() && !estaNoPortalFilial() && itemAprovadoParaProducao && quantidadePendente > disponibilidade;
         const producaoProgramada = itemAprovadoParaProducao && Boolean(item.producaoPrevista) && quantidadePendente > 0;
         const acaoProducao = (precisaProducao || producaoProgramada)
@@ -3711,7 +3842,7 @@ function abrirModalDetalhesPedido(pedidoId) {
                     <span>${escaparHTML(descricao)}</span>
                 </div>
                 <div class="acoes-item-detalhes">
-                    <span class="selo-tipo ${foiEnviado ? "tipo-aprovado" : classeSituacaoPedido(situacao)}">${envioParcial ? "Envio parcial" : foiEnviado ? "Enviado" : "Não enviado"}</span>
+                    <span class="selo-tipo ${statusItem.classe}">${statusItem.texto}</span>
                     ${saldoEncerrado > 0 ? `<span class="data-recebimento-item">Atendido parcialmente</span>` : ""}
                     ${confirmadoEm ? `<span class="data-recebimento-item">Confirmado em<br>${formatarData(confirmadoEm)}</span>` : ""}
                     ${acaoProducao}
@@ -3752,16 +3883,42 @@ async function confirmarRecebimentoRemessa(remessaId, pedidoId) {
     notificar("Recebimento da remessa confirmado.");
 }
 
-async function cancelarRemessa(remessaId, pedidoId) {
+function abrirModalCancelarRemessa(remessaId, pedidoId) {
+    const remessa = estado.remessas.find((registro) => registro.id === remessaId);
+    const pedido = estado.pedidos.find((registro) => registro.id === pedidoId);
+    if (!clienteSupabase || !usuarioEhCD() || !remessa || !pedido || remessa.situacao !== "em_transito") return;
+
+    const itens = itensDoPedido(pedido);
+    const remessasAtivas = estado.remessas.filter((registro) => registro.pedidoId === pedido.id && registro.situacao !== "cancelada");
+    const cancelarPedidoCompleto = itens.length === 1 && remessasAtivas.length === 1;
+    const outrosItens = itens.filter((item) => !remessa.itens.some((itemRemessa) => itemRemessa.produtoId === item.produtoId));
+    const itensEmAndamento = outrosItens.filter((item) => !["recebido", "recusado"].includes(situacaoDoItemPedido(item, pedido)));
+
+    elementos.formularioCancelarRemessa.reset();
+    elementos.cancelarRemessaId.value = remessaId;
+    elementos.cancelarRemessaPedidoId.value = pedidoId;
+    elementos.cancelarRemessaPedidoCompleto.value = String(cancelarPedidoCompleto);
+    elementos.resumoCancelarRemessa.textContent = cancelarPedidoCompleto
+        ? "Este pedido possui apenas um item e esta é a única remessa ativa. Ao confirmar, a remessa e o pedido serão cancelados. O estoque retornará ao CD."
+        : `Apenas esta remessa será cancelada e seu estoque retornará ao CD. O pedido continuará ativo${itensEmAndamento.length ? ` com ${itensEmAndamento.length} outro(s) item(ns) em andamento` : ""}; nenhum outro item será cancelado.`;
+    elementos.mensagemCancelarRemessa.textContent = "";
+    abrirModal(elementos.modalCancelarRemessa);
+    setTimeout(() => elementos.motivoCancelarRemessa.focus(), 0);
+}
+
+async function cancelarRemessa(remessaId, pedidoId, motivo, cancelarPedidoCompleto = false) {
     if (!clienteSupabase || !usuarioEhCD()) return;
-    const motivo = window.prompt("Informe o motivo do cancelamento:");
-    if (motivo === null) return;
-    const { error } = await clienteSupabase.rpc("cancelar_remessa", { p_remessa_id: remessaId, p_motivo: motivo.trim() || null });
+    const { error } = await clienteSupabase.rpc("cancelar_remessa", {
+        p_remessa_id: remessaId,
+        p_motivo: motivo,
+        p_cancelar_pedido: cancelarPedidoCompleto
+    });
     if (error) {
         console.error(error);
-        notificar(`Não foi possível cancelar a remessa: ${error.message}`, "erro");
+        elementos.mensagemCancelarRemessa.textContent = error.message || "Não foi possível cancelar a remessa.";
         return;
     }
+    fecharModal(elementos.modalCancelarRemessa);
     await carregarDadosSupabase();
     abrirModalDetalhesPedido(pedidoId);
     notificar("Remessa cancelada e estoque estornado ao CD.");
@@ -4113,6 +4270,9 @@ function lidarComAcao(acao, elemento) {
         case "ver-alertas":
             navegar("estoque-baixo");
             break;
+        case "ver-itens-em-producao":
+            abrirModalItensEmProducao();
+            break;
         case "movimentar":
             navegar("movimentacao", {
                 tipoMovimentacao: elemento.dataset.tipo,
@@ -4218,7 +4378,7 @@ function lidarComAcao(acao, elemento) {
             confirmarRecebimentoRemessa(elemento.dataset.remessaId, elemento.dataset.pedidoId);
             break;
         case "cancelar-remessa":
-            cancelarRemessa(elemento.dataset.remessaId, elemento.dataset.pedidoId);
+            abrirModalCancelarRemessa(elemento.dataset.remessaId, elemento.dataset.pedidoId);
             break;
         case "encerrar-saldo-item":
             abrirModalEncerrarSaldoItem(elemento.dataset.pedidoId, elemento.dataset.produtoId);
@@ -4340,7 +4500,7 @@ document.addEventListener("click", (evento) => {
     if (!evento.target.closest(".menu-lateral") && !evento.target.closest("#botao-menu-mobile")) fecharMenuMobile();
 });
 
-[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRecusarItem, elementos.modalEncerrarSaldoItem, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido].forEach((modal) => {
+[elementos.modalProduto, elementos.modalPedido, elementos.modalEntrega, elementos.modalAnalisarPedido, elementos.modalRecusarItem, elementos.modalEncerrarSaldoItem, elementos.modalCancelarRemessa, elementos.modalRemessa, elementos.modalUsuario, elementos.modalAlterarSenha, elementos.modalEstoqueFilial, elementos.modalDetalhesPedido, elementos.modalItensEmProducao].forEach((modal) => {
     modal.addEventListener("click", (evento) => {
         if (evento.target === modal) fecharModal(modal);
     });
@@ -4357,11 +4517,13 @@ document.addEventListener("keydown", (evento) => {
         fecharModal(elementos.modalAnalisarPedido);
         fecharModal(elementos.modalRecusarItem);
         fecharModal(elementos.modalEncerrarSaldoItem);
+        fecharModal(elementos.modalCancelarRemessa);
         fecharModal(elementos.modalRemessa);
         fecharModal(elementos.modalUsuario);
         fecharModal(elementos.modalAlterarSenha);
         fecharModal(elementos.modalEstoqueFilial);
         fecharModal(elementos.modalDetalhesPedido);
+        fecharModal(elementos.modalItensEmProducao);
     }
 });
 
@@ -4800,6 +4962,23 @@ elementos.formularioEncerrarSaldoItem.addEventListener("submit", (evento) => {
         return;
     }
     encerrarSaldoItemPedido(elementos.encerrarSaldoPedidoId.value, elementos.encerrarSaldoProdutoId.value, motivo);
+});
+
+elementos.formularioCancelarRemessa.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    const motivo = elementos.motivoCancelarRemessa.value.trim();
+    elementos.mensagemCancelarRemessa.textContent = "";
+    if (!motivo) {
+        elementos.mensagemCancelarRemessa.textContent = "Informe o motivo do cancelamento para continuar.";
+        elementos.motivoCancelarRemessa.focus();
+        return;
+    }
+    cancelarRemessa(
+        elementos.cancelarRemessaId.value,
+        elementos.cancelarRemessaPedidoId.value,
+        motivo,
+        elementos.cancelarRemessaPedidoCompleto.value === "true"
+    );
 });
 
 elementos.formularioRemessa.addEventListener("submit", (evento) => {

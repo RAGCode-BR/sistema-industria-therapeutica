@@ -49,6 +49,7 @@ button {
     height: 108px;
     width: 176px;
     padding-left: 8px;
+    object-fit: contain;
 }
 
 .icone {
@@ -320,6 +321,69 @@ textarea:focus-visible {
     align-items: center;
     gap: 12px;
 }
+
+.botao-em-producao-cabecalho {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 40px;
+    padding: 8px 10px 8px 13px;
+    color: #237a4b;
+    background: #eef9f3;
+    border: 1px solid #bfe6d0;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 5px 14px rgba(51, 145, 93, 0.1);
+    transition: color 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* Produção é uma visão operacional exclusiva do Centro de Distribuição. */
+.botao-em-producao-cabecalho[hidden],
+body.portal-filial-ativo .botao-em-producao-cabecalho {
+    display: none !important;
+}
+
+.botao-em-producao-cabecalho:hover,
+.botao-em-producao-cabecalho:focus-visible {
+    color: #17683d;
+    background: #e2f5eb;
+    border-color: #8fd0ad;
+    box-shadow: 0 8px 18px rgba(51, 145, 93, 0.16);
+    transform: translateY(-1px);
+}
+
+.botao-em-producao-cabecalho strong {
+    display: grid;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    place-items: center;
+    color: var(--branco);
+    background: #33915d;
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.botao-em-producao-cabecalho .sinal-em-producao {
+    width: 8px;
+    height: 8px;
+    background: #38a169;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(56, 161, 105, 0.14);
+}
+
+.botao-em-producao-cabecalho.sem-itens {
+    color: var(--marrom-claro);
+    background: #fffaf8;
+    border-color: var(--borda);
+    box-shadow: none;
+}
+
+.botao-em-producao-cabecalho.sem-itens strong { background: #aa9993; }
+.botao-em-producao-cabecalho.sem-itens .sinal-em-producao { background: #aa9993; box-shadow: none; }
 
 .seletor-portal {
     display: flex;
@@ -1362,6 +1426,16 @@ tbody tr:last-child td {
 .tipo-recusado {
     color: var(--vermelho);
     background: var(--salmão-claro);
+}
+
+.tipo-em_producao {
+    color: #73539b;
+    background: #f1eafa;
+}
+
+.tipo-agendado_envio {
+    color: #45658f;
+    background: #eaf2fb;
 }
 
 .item-remessa {
@@ -2595,6 +2669,13 @@ tbody tr:last-child td {
     border-color: var(--verde);
 }
 
+/* No estado verde, o texto auxiliar precisa preservar contraste com o fundo. */
+.acoes-item-detalhes .botao-acao:hover small,
+.acoes-item-detalhes .botao-acao:focus-visible small,
+.acoes-item-detalhes .botao-acao:active small {
+    color: #eafff1;
+}
+
 .acoes-item-detalhes .botao-acao.acao-perigo {
     color: var(--vermelho);
     background: #fff1ee;
@@ -2923,6 +3004,23 @@ tbody tr:last-child td {
     box-sizing: border-box;
 }
 
+.modal-itens-em-producao-conteudo {
+    width: min(100%, 1050px);
+    box-sizing: border-box;
+}
+
+.tabela-itens-em-producao {
+    margin-top: 20px;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+}
+
+.tabela-itens-em-producao table { min-width: 800px; }
+.tabela-itens-em-producao th { white-space: nowrap; }
+.tabela-itens-em-producao td { vertical-align: middle; }
+.tabela-itens-em-producao .quantidade-producao { white-space: nowrap; }
+.tabela-itens-em-producao .botao-acao { white-space: nowrap; }
+
 #modal-entrega { z-index: 30; }
 
 .modal-cabecalho {
@@ -2941,19 +3039,31 @@ tbody tr:last-child td {
 
 .botao-fechar {
     display: grid;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     place-items: center;
     color: var(--marrom-claro);
-    background: transparent;
-    border: 0;
-    border-radius: 8px;
-    font-size: 27px;
+    background: #fffaf8;
+    border: 1px solid #efdbd4;
+    border-radius: 50%;
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 160ms ease, color 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .botao-fechar:hover {
-    color: var(--salmão);
+    color: var(--salmão-escuro);
     background: var(--salmão-claro);
+    border-color: #e9a898;
+    box-shadow: 0 5px 12px rgba(201, 93, 73, 0.16);
+    transform: rotate(90deg);
+}
+
+.botao-fechar:focus-visible {
+    outline: 3px solid rgba(232, 120, 97, 0.28);
+    outline-offset: 2px;
 }
 
 .campos-lado-a-lado {
