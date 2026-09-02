@@ -283,10 +283,6 @@ const elementos = {
     mensagemUnidade: document.querySelector("#mensagem-unidade"),
     botaoSalvarUnidade: document.querySelector("#botao-salvar-unidade"),
     tabelaUnidades: document.querySelector("#tabela-unidades"),
-    quantidadeAleatoriaMinima: document.querySelector("#quantidade-aleatoria-minima"),
-    quantidadeAleatoriaMaxima: document.querySelector("#quantidade-aleatoria-maxima"),
-    botaoGerarQuantidadesAleatorias: document.querySelector("#botao-gerar-quantidades-aleatorias"),
-    mensagemGerarEstoque: document.querySelector("#mensagem-gerar-estoque"),
     tituloPortalFilial: document.querySelector("#titulo-portal-filial"),
     indicadorFilialPedidos: document.querySelector("#indicador-filial-pedidos"),
     formularioItemPedido: document.querySelector("#formulario-item-pedido"),
@@ -4628,49 +4624,6 @@ elementos.movimentoXml.addEventListener("change", importarXmlMovimentacao);
 elementos.movimentoItemXml.addEventListener("change", () => preencherItemXmlMovimentacao(elementos.movimentoItemXml.value));
 elementos.botaoRemoverXml.addEventListener("click", () => limparImportacaoXml());
 elementos.botaoCadastrarProdutoXml.addEventListener("click", abrirCadastroProdutoDoXml);
-
-elementos.botaoGerarQuantidadesAleatorias?.addEventListener("click", async () => {
-    const minimo = Number(elementos.quantidadeAleatoriaMinima.value);
-    const maximo = Number(elementos.quantidadeAleatoriaMaxima.value);
-    const produtos = produtosAtivos();
-
-    elementos.mensagemGerarEstoque.textContent = "";
-
-    if (!Number.isInteger(minimo) || !Number.isInteger(maximo) || minimo < 0 || maximo < minimo) {
-        elementos.mensagemGerarEstoque.textContent = "Informe quantidades inteiras válidas, com o máximo igual ou maior que o mínimo.";
-        return;
-    }
-
-    if (!produtos.length) {
-        elementos.mensagemGerarEstoque.textContent = "Não há produtos ativos para atualizar.";
-        return;
-    }
-
-    const confirmou = window.confirm(`Gerar uma quantidade aleatória entre ${minimo} e ${maximo} para os ${produtos.length} produto(s) ativos? Os saldos atuais serão substituídos e o histórico registrará os ajustes.`);
-    if (!confirmou) return;
-
-    const agora = new Date().toISOString();
-    produtos.forEach((produto) => {
-        const saldoAntes = produto.quantidade;
-        const saldoDepois = Math.floor(Math.random() * (maximo - minimo + 1)) + minimo;
-        produto.quantidade = saldoDepois;
-        produto.atualizadoEm = agora;
-        registrarMovimentacao({
-            produto,
-            tipo: "ajuste",
-            quantidade: Math.abs(saldoDepois - saldoAntes),
-            saldoAntes,
-            saldoDepois,
-            observacao: `Quantidade aleatória gerada nas configurações (${minimo}–${maximo}).`
-        });
-    });
-
-    elementos.botaoGerarQuantidadesAleatorias.disabled = true;
-    await salvarEstado();
-    elementos.botaoGerarQuantidadesAleatorias.disabled = false;
-    renderizarTudo();
-    notificar(`Quantidades aleatórias geradas para ${produtos.length} produto(s).`);
-});
 
 elementos.formularioProduto.addEventListener("submit", async (evento) => {
     evento.preventDefault();
