@@ -5,7 +5,8 @@
   "scripts": {
     "predev": "node scripts/gerar-config.js",
     "dev": "serve . -l 3000",
-    "test:reports": "node scripts/test-relatorios.js"
+    "test:reports": "node scripts/test-relatorios.js",
+    "test:quality": "node scripts/test-qualidade.js"
   },
   "devDependencies": {
     "serve": "^14.2.4"

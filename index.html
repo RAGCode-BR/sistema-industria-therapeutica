@@ -32,6 +32,7 @@
                     <button class="item-menu" data-pagina="filiais"><span class="icone icone-filiais" aria-hidden="true"></span><span>Filiais</span></button>
                     <button class="item-menu" data-pagina="historico"><span class="icone icone-historico" aria-hidden="true"></span><span>Histórico</span></button>
                     <button class="item-menu" data-pagina="relatorios"><span class="icone icone-relatorios" aria-hidden="true"></span><span>Relatórios</span></button>
+                    <button class="item-menu" data-pagina="qualidade"><span class="icone icone-alerta" aria-hidden="true"></span><span>Qualidade</span></button>
                     <button class="item-menu" data-pagina="usuarios"><span class="icone icone-usuarios" aria-hidden="true"></span><span>Usuários</span></button>
                     <button class="item-menu" type="button" id="botao-configuracoes" aria-expanded="false"><span class="icone icone-config" aria-hidden="true"></span><span>Configurações</span></button>
                     <div class="submenu-configuracoes" id="submenu-configuracoes" hidden>
@@ -45,6 +46,7 @@
                     <button class="item-menu" data-pagina="portal-filial"><span class="icone icone-inicio" aria-hidden="true"></span><span>Início</span></button>
                     <button class="item-menu" data-pagina="novo-pedido-filial"><span class="icone icone-pedidos" aria-hidden="true"></span><span>Novo pedido</span></button>
                     <button class="item-menu" data-pagina="meus-pedidos"><span class="icone icone-historico" aria-hidden="true"></span><span>Meus pedidos</span></button>
+                    <button class="item-menu" data-pagina="qualidade"><span class="icone icone-alerta" aria-hidden="true"></span><span>Qualidade</span></button>
                 </div>
             </nav>
 
@@ -498,6 +500,32 @@
                     </section>
                 </section>
 
+                <section class="pagina" id="pagina-qualidade">
+                    <div class="cabecalho-secao qualidade-cabecalho">
+                        <div><p class="subtitulo-secao">Controle de qualidade</p><h2>Qualidade</h2><p>Monitore não conformidades, análises e tratativas dos produtos.</p></div>
+                        <button type="button" class="botao-principal botao-qualidade-principal" id="botao-nova-ocorrencia-qualidade"><span class="icone icone-plus" aria-hidden="true"></span>Nova ocorrência</button>
+                    </div>
+                    <section class="grade-kpis-relatorio qualidade-kpis" aria-label="Indicadores da qualidade">
+                        <article class="cartao kpi-relatorio"><p>Ocorrências abertas</p><strong id="qualidade-kpi-abertas">—</strong></article>
+                        <article class="cartao kpi-relatorio"><p>Em análise</p><strong id="qualidade-kpi-analise">—</strong></article>
+                        <article class="cartao kpi-relatorio"><p>Em tratativa</p><strong id="qualidade-kpi-tratativa">—</strong></article>
+                        <article class="cartao kpi-relatorio"><p>Críticas</p><strong id="qualidade-kpi-criticas">—</strong></article>
+                        <article class="cartao kpi-relatorio"><p>Resolvidas</p><strong id="qualidade-kpi-resolvidas">—</strong></article>
+                        <article class="cartao kpi-relatorio"><p>Tempo médio de resolução</p><strong id="qualidade-kpi-tempo">—</strong></article>
+                    </section>
+                    <section class="filtros filtros-relatorios filtros-qualidade" aria-label="Filtros de qualidade">
+                        <label><span>Busca</span><input type="search" id="qualidade-busca" placeholder="Número, produto ou problema"></label>
+                        <label><span>Status</span><select id="qualidade-filtro-status"><option value="">Todos</option><option value="open">Aberta</option><option value="analysis">Em análise</option><option value="treatment">Em tratativa</option><option value="waiting_confirmation">Aguardando confirmação</option><option value="resolved">Resolvida</option><option value="cancelled">Cancelada</option></select></label>
+                        <label><span>Prioridade</span><select id="qualidade-filtro-prioridade"><option value="">Todas</option><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option><option value="critical">Crítica</option></select></label>
+                        <label><span>Origem</span><select id="qualidade-filtro-origem"><option value="">Todas</option><option value="production">Produção</option><option value="expedition">Expedição</option><option value="transport">Transporte</option><option value="branch_receiving">Recebimento na filial</option><option value="stock">Estoque</option><option value="other">Outros</option></select></label>
+                        <label><span>Filial</span><select id="qualidade-filtro-filial"><option value="">Todas</option></select></label>
+                        <label><span>Produto</span><select id="qualidade-filtro-produto"><option value="">Todos</option></select></label>
+                        <button type="button" class="botao-secundario botao-qualidade-limpar" id="qualidade-limpar-filtros">Limpar filtros</button>
+                    </section>
+                    <section class="quadro"><div class="titulo-quadro"><div><h2>Ocorrências recentes</h2><p id="qualidade-resumo-lista">Carregando ocorrências…</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Número</th><th>Data</th><th>Produto</th><th>Filial / origem</th><th>Problema</th><th>Afetado</th><th>Prioridade</th><th>Responsável</th><th>Status</th><th>Tempo em aberto</th><th></th></tr></thead><tbody id="qualidade-tabela-ocorrencias"></tbody></table></div></section>
+                    <section class="painel-duplo relatorio-listas"><article class="quadro"><div class="titulo-quadro"><div><h2>Produtos com mais ocorrências</h2><p>Quantidade de ocorrências e unidades afetadas.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Produto</th><th>Ocorrências</th><th>Afetado</th></tr></thead><tbody id="qualidade-ranking-produtos"></tbody></table></div></article><article class="quadro"><div class="titulo-quadro"><div><h2>Ocorrências por origem</h2><p>Distribuição das não conformidades.</p></div></div><div class="tabela-responsiva"><table class="tabela-relatorio"><thead><tr><th>Origem</th><th>Ocorrências</th></tr></thead><tbody id="qualidade-ranking-origens"></tbody></table></div></article></section>
+                </section>
+
                 <section class="pagina" id="pagina-portal-filial">
                     <section class="apresentacao apresentacao-filial">
                         <div>
@@ -704,6 +732,20 @@
                                     <tbody id="tabela-unidades"></tbody>
                                 </table>
                             </div>
+                        </article>
+                        <article class="cartao-configuracao cartao-gerar-estoque">
+                            <h3>Gerar estoque aleatório</h3>
+                            <p>Uso temporário para a validação final: preencha os produtos ativos com quantidades de teste.</p>
+                            <div class="campos-gerar-estoque">
+                                <label for="quantidade-aleatoria-minima">Quantidade mínima
+                                    <input type="number" id="quantidade-aleatoria-minima" min="0" step="1" value="1">
+                                </label>
+                                <label for="quantidade-aleatoria-maxima">Quantidade máxima
+                                    <input type="number" id="quantidade-aleatoria-maxima" min="0" step="1" value="100">
+                                </label>
+                            </div>
+                            <button type="button" class="botao-principal" id="botao-gerar-quantidades-aleatorias">Gerar quantidades aleatórias</button>
+                            <p class="mensagem-formulario" id="mensagem-gerar-estoque" aria-live="polite"></p>
                         </article>
                     </section>
                 </section>
@@ -1122,6 +1164,10 @@
         </div>
     </div>
 
+    <div class="modal" id="modal-ocorrencia-qualidade" aria-hidden="true"><div class="modal-conteudo modal-qualidade" role="dialog" aria-modal="true"><div class="modal-cabecalho"><div><p class="subtitulo-modal">Controle de qualidade</p><h2>Nova ocorrência</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-ocorrencia-qualidade" aria-label="Fechar">×</button></div><form id="formulario-ocorrencia-qualidade"><div class="grade-formulario-qualidade"><label>Origem<select id="qualidade-origem" required><option value="">Selecione</option><option value="production">Produção</option><option value="expedition">Expedição</option><option value="transport">Transporte</option><option value="branch_receiving">Recebimento na filial</option><option value="stock">Estoque</option><option value="other">Outros</option></select></label><label>Filial<select id="qualidade-filial"></select></label><label>Pedido<select id="qualidade-pedido"><option value="">Sem vínculo</option></select></label><label>Remessa<select id="qualidade-remessa"><option value="">Sem vínculo</option></select></label><label>Categoria<select id="qualidade-categoria" required></select></label><label>Tipo do problema<select id="qualidade-tipo" required></select></label><label>Prioridade<select id="qualidade-prioridade" required><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option><option value="critical">Crítica</option></select></label><label>Comercialização<select id="qualidade-comercializacao" required><option value="waiting_analysis">Aguardando avaliação</option><option value="allowed">Liberado para comercialização</option><option value="blocked">Bloqueado para comercialização</option></select></label></div><div class="qualidade-itens"><div class="titulo-quadro"><div><h3>Produtos afetados</h3><p>Inclua todos os produtos relacionados à ocorrência.</p></div><button type="button" class="botao-secundario" id="qualidade-adicionar-item">Adicionar produto</button></div><div id="qualidade-itens-formulario"></div></div><label>Descrição<textarea id="qualidade-descricao" rows="4" required placeholder="Descreva a não conformidade identificada."></textarea></label><label>Evidências iniciais<input id="qualidade-arquivos" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>JPEG, PNG ou WEBP, até 10 MB por arquivo.</small></label><div id="qualidade-preview-arquivos" class="qualidade-evidencias-preview"></div><p class="mensagem-formulario" id="qualidade-mensagem-formulario" aria-live="polite"></p><div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-ocorrencia-qualidade">Cancelar</button><button type="submit" class="botao-principal" id="qualidade-salvar-ocorrencia">Registrar ocorrência</button></div></form></div></div>
+
+    <div class="modal" id="modal-detalhes-qualidade" aria-hidden="true"><div class="modal-conteudo modal-qualidade" role="dialog" aria-modal="true"><div class="modal-cabecalho"><div><p class="subtitulo-modal">Controle de qualidade</p><h2 id="qualidade-titulo-detalhes">Ocorrência</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-detalhes-qualidade" aria-label="Fechar">×</button></div><div id="qualidade-detalhes-conteudo"></div><div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-detalhes-qualidade">Fechar</button></div></div></div>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
@@ -1130,5 +1176,7 @@
     <script src="./assets/js/pedidos-utils.js"></script>
     <script src="./assets/js/relatorios-utils.js"></script>
     <script src="./assets/js/script.js"></script>
+    <script src="./assets/js/qualidade-utils.js"></script>
+    <script src="./assets/js/qualidade.js"></script>
 </body>
 </html>
