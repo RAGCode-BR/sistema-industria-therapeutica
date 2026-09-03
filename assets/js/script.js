@@ -697,6 +697,8 @@ function normalizarMovimentacao(movimentacao) {
         observacao: String(movimentacao?.observacao ?? movimentacao?.note ?? ""),
         filialId: String(movimentacao?.filialId ?? ""),
         pedidoId: String(movimentacao?.pedidoId ?? ""),
+        criadoPor: String(movimentacao?.criadoPor ?? movimentacao?.criado_por ?? ""),
+        responsavelNome: String(movimentacao?.responsavelNome ?? movimentacao?.responsavel_nome ?? ""),
         criadoEm: movimentacao?.criadoEm ?? movimentacao?.data ?? movimentacao?.createdAt ?? new Date().toISOString()
     };
 }
@@ -1075,12 +1077,25 @@ async function carregarDadosSupabase() {
         estoqueFiliais: Object.fromEntries(estoques.data.map((item) => [chaveEstoqueFilial(item.filial_id, item.produto_id), { quantidade: item.quantidade, atualizadoEm: item.atualizado_em }])),
         movimentacoes: movimentacoes.data.map((movimentacao) => {
             const produto = produtosPorId.get(movimentacao.produto_id);
-            return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", remessaId: movimentacao.remessa_id || "", criadoEm: movimentacao.criado_em };
+            return { id: movimentacao.id, produtoId: movimentacao.produto_id, produtoNome: produto?.nome || "Produto nao identificado", tipo: movimentacao.tipo, quantidade: movimentacao.quantidade, unidade: produto?.unidade || "Unidade", saldoAntes: movimentacao.saldo_antes, saldoDepois: movimentacao.saldo_depois, observacao: movimentacao.observacao, filialId: movimentacao.filial_id || "", pedidoId: movimentacao.pedido_id || "", remessaId: movimentacao.remessa_id || "", criadoPor: movimentacao.criado_por || "", criadoEm: movimentacao.criado_em };
         }),
         remessas: remessasVisiveis.map(normalizarRemessa),
         reservasProducao: reservasVisiveis.map(normalizarReservaProducao),
         eventosPedido: eventosVisiveis.map((evento) => ({ id: evento.id, pedidoId: evento.pedido_id, remessaId: evento.remessa_id, tipo: evento.tipo, dados: evento.dados || {}, criadoEm: evento.criado_em }))
     };
+    const idsMovimentacoes = estado.movimentacoes.map((movimentacao) => movimentacao.id);
+    const responsaveisMovimentacoes = idsMovimentacoes.length
+        ? await clienteSupabase.rpc("listar_responsaveis_movimentacoes", { p_movimentacoes: idsMovimentacoes })
+        : { data: [], error: null };
+    if (responsaveisMovimentacoes.error) {
+        console.error(responsaveisMovimentacoes.error);
+        notificar("Não foi possível carregar os responsáveis das movimentações.", "erro");
+        return;
+    }
+    const nomesPorUsuario = new Map((responsaveisMovimentacoes.data || []).map((usuario) => [usuario.id, usuario.nome]));
+    estado.movimentacoes.forEach((movimentacao) => {
+        movimentacao.responsavelNome = nomesPorUsuario.get(movimentacao.criadoPor) || "Não informado";
+    });
     idsPedidosRemotos = new Set(estado.pedidos.map((pedido) => pedido.id));
     estadoSincronizado = JSON.parse(JSON.stringify(estado));
     renderizarTudo();
@@ -2481,6 +2496,7 @@ function renderizarHistorico() {
                     <td data-label="Tipo"><span class="selo-tipo ${classeTipoMovimentacao(movimentacao.tipo)}">${textoTipoMovimentacao(movimentacao.tipo)}</span></td>
                     <td data-label="Produto"><strong>${escaparHTML(movimentacao.produtoNome)}</strong><span class="detalhe-celula">${saldo}</span></td>
                     <td data-label="Quantidade">${formatarNumero(movimentacao.quantidade)} ${escaparHTML(movimentacao.unidade)}</td>
+                    <td data-label="Realizado por">${escaparHTML(movimentacao.responsavelNome || "Não informado")}</td>
                     <td data-label="Destino ou observacao">${escaparHTML(destino)}${referenciaRemessa ? `<span class="detalhe-celula">${referenciaRemessa}</span>` : movimentacao.observacao && filial ? `<span class="detalhe-celula">${escaparHTML(movimentacao.observacao)}</span>` : ""}</td>
                 </tr>
             `;
@@ -4266,11 +4282,17 @@ function lidarComAcao(acao, elemento) {
         case "nova-entrada":
             navegar("movimentacao", { tipoMovimentacao: "entrada" });
             break;
+        case "ver-meu-estoque":
+            navegar("produtos");
+            break;
         case "ver-historico":
             navegar("historico");
             break;
         case "ver-alertas":
             navegar("estoque-baixo");
+            break;
+        case "ver-pedidos-filiais":
+            navegar("pedidos");
             break;
         case "ver-itens-em-producao":
             abrirModalItensEmProducao();

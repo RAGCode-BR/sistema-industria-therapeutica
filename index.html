@@ -145,38 +145,38 @@
                     </section>
 
                     <section class="indicadores" aria-label="Indicadores do estoque">
-                        <article class="cartao cartao-produtos">
+                        <button class="cartao cartao-produtos cartao-atalho-estoque" type="button" data-acao="ver-meu-estoque" aria-label="Ver meu estoque e os produtos cadastrados">
                             <span class="indicador-icone" aria-hidden="true"><span class="icone icone-produtos"></span></span>
                             <div class="indicador-conteudo">
                             <p>Produtos cadastrados</p>
                             <strong id="indicador-produtos">0</strong>
                             <span>itens ativos</span>
                             </div>
-                        </article>
-                        <article class="cartao cartao-unidades">
+                        </button>
+                        <button class="cartao cartao-unidades cartao-atalho-estoque" type="button" data-acao="ver-meu-estoque" aria-label="Ver meu estoque e a quantidade total">
                             <span class="indicador-icone" aria-hidden="true"><span class="icone icone-produtos"></span></span>
                             <div class="indicador-conteudo">
                             <p>Quantidade total</p>
                             <strong id="indicador-unidades">0</strong>
                             <span>unidades no CD</span>
                             </div>
-                        </article>
-                        <article class="cartao cartao-alerta">
+                        </button>
+                        <button class="cartao cartao-alerta cartao-atalho-estoque" type="button" data-acao="ver-alertas" aria-label="Ver produtos com estoque baixo">
                             <span class="indicador-icone" aria-hidden="true"><span class="icone icone-alerta"></span></span>
                             <div class="indicador-conteudo">
                             <p>Estoque baixo</p>
                             <strong id="indicador-estoque-baixo">0</strong>
                             <span>produtos para revisar</span>
                             </div>
-                        </article>
-                        <article class="cartao cartao-pedidos">
+                        </button>
+                        <button class="cartao cartao-pedidos cartao-atalho-estoque" type="button" data-acao="ver-pedidos-filiais" aria-label="Ver pedidos das filiais">
                             <span class="indicador-icone" aria-hidden="true"><span class="icone icone-pedidos"></span></span>
                             <div class="indicador-conteudo">
                             <p>Pedidos pendentes</p>
                             <strong id="indicador-pedidos">0</strong>
                             <span>solicitações abertas</span>
                             </div>
-                        </article>
+                        </button>
                     </section>
 
                     <section class="painel-duplo">
@@ -671,6 +671,7 @@
                                         <th>Tipo</th>
                                         <th>Produto</th>
                                         <th>Quantidade</th>
+                                        <th>Realizado por</th>
                                         <th>Destino / observação</th>
                                     </tr>
                                 </thead>
@@ -733,7 +734,7 @@
                                     <tbody id="tabela-unidades"></tbody>
                                 </table>
                             </div>
-                        </article>
+                        </button>
                         <article class="cartao-configuracao cartao-gerar-estoque">
                             <h3>Gerar estoque aleatório</h3>
                             <p>Uso temporário para a validação final: preencha os produtos ativos com quantidades de teste.</p>
@@ -747,7 +748,7 @@
                             </div>
                             <button type="button" class="botao-principal" id="botao-gerar-quantidades-aleatorias">Gerar quantidades aleatórias</button>
                             <p class="mensagem-formulario" id="mensagem-gerar-estoque" aria-live="polite"></p>
-                        </article>
+                        </button>
                     </section>
                 </section>
 

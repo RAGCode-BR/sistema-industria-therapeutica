@@ -1086,6 +1086,32 @@ main {
     box-shadow: 0 7px 18px rgba(83, 58, 49, 0.045);
 }
 
+#pagina-dashboard .cartao-atalho-estoque {
+    width: 100%;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+#pagina-dashboard .cartao-atalho-estoque:hover,
+#pagina-dashboard .cartao-atalho-estoque:focus-visible {
+    border-color: #eaa99a;
+    box-shadow: 0 11px 22px rgba(129, 74, 60, 0.12);
+    transform: translateY(-2px);
+}
+#pagina-dashboard .cartao-atalho-estoque:focus-visible { outline: 3px solid rgba(232, 120, 97, 0.25); outline-offset: 2px; }
+#pagina-dashboard .cartao-atalho-estoque::after {
+    margin-left: auto;
+    color: var(--coral-escuro);
+    content: "→";
+    font-size: 20px;
+    font-weight: 600;
+    transition: transform 160ms ease;
+}
+#pagina-dashboard .cartao-atalho-estoque:hover::after,
+#pagina-dashboard .cartao-atalho-estoque:focus-visible::after { transform: translateX(3px); }
+
 #pagina-dashboard .indicador-icone {
     display: inline-grid;
     flex: 0 0 48px;
