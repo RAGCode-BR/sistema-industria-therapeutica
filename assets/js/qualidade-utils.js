@@ -1,6 +1,6 @@
 (function (global) {
     const origem = {
-        production: "Produção", expedition: "Expedição", transport: "Transporte",
+        production: "Fabricação no CD", expedition: "Expedição", transport: "Transporte",
         branch_receiving: "Recebimento na filial", stock: "Estoque", other: "Outros"
     };
     const situacao = {
@@ -22,11 +22,22 @@
     function validarImagem(arquivo) {
         return Boolean(arquivo && ["image/jpeg", "image/png", "image/webp"].includes(arquivo.type) && arquivo.size > 0 && arquivo.size <= 10485760);
     }
+    function textoTratamentoChamado(origemChamado, encaminhamento) {
+        if (origemChamado === "production") return "Indústria/CD";
+        return encaminhamento === "cd" ? "Enviado ao CD" : "Interno na filial";
+    }
+    function textoStatusChamado(origemChamado, encaminhamento, situacaoChamado) {
+        if (situacaoChamado === "resolved") return "Resolvido";
+        if (origemChamado === "branch_receiving" && encaminhamento === "cd") return "Aguardando o CD";
+        return origemChamado === "production" ? "Aberto no CD" : "Aberto na filial";
+    }
 
     global.QualidadeUtils = {
         textoOrigem: (valor) => texto(origem, valor),
         textoSituacao: (valor) => texto(situacao, valor),
         textoPrioridade: (valor) => texto(prioridade, valor),
+        textoTratamentoChamado,
+        textoStatusChamado,
         duracao,
         validarImagem
     };
