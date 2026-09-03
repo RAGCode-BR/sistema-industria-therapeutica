@@ -4006,6 +4006,9 @@ small {
         padding-left: 12px;
         border-left: 1px solid var(--borda);
     }
+    #pagina-pedidos tbody td:nth-child(2) { align-items: center; text-align: center !important; }
+    #pagina-pedidos tbody td:nth-child(2)::before { align-self: stretch; text-align: center; }
+    #pagina-pedidos .codigo-pedido { color: var(--marrom); font-size: 22px; font-weight: 800; line-height: 1.1; }
     #pagina-pedidos tbody td:nth-child(1)::before,
     #pagina-pedidos tbody td:nth-child(2)::before { margin-bottom: 5px; }
     #pagina-pedidos tbody td:nth-child(3) { padding: 12px 0; }
