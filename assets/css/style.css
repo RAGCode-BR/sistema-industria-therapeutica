@@ -3982,17 +3982,22 @@ small {
     #pagina-pedidos tbody td:last-child { padding: 14px 0 0; border-bottom: 0; }
     #pagina-pedidos tbody td:last-child .botao-acao { width: 100%; min-height: 46px; border-radius: 10px; font-size: 13px; }
     #pagina-pedidos .tabela-vazia { display: block; padding: 36px 15px; text-align: center; }
-    /* A tabela vira um cartão legível, sem manter as larguras do desktop. */
+    /* Cartão de pedido: dados de identificação compactos e leitura vertical. */
     #pagina-pedidos table { table-layout: auto; }
     #pagina-pedidos tbody tr { width: 100%; min-width: 0; box-sizing: border-box; }
-    #pagina-pedidos tbody td { width: 100% !important; min-width: 0; box-sizing: border-box; overflow-wrap: anywhere; }
+    #pagina-pedidos tbody td {
+        width: 100% !important;
+        min-width: 0;
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
+        text-align: left !important;
+    }
     #pagina-pedidos tbody td:nth-child(1),
     #pagina-pedidos tbody td:nth-child(2) {
         display: inline-flex;
         flex-direction: column;
         width: 49% !important;
-        min-height: 74px;
-        padding: 0 12px 14px 0;
+        padding: 0 12px 12px 0;
         vertical-align: top;
         border-bottom: 0;
     }
@@ -4001,11 +4006,15 @@ small {
         padding-left: 12px;
         border-left: 1px solid var(--borda);
     }
-    #pagina-pedidos tbody td:nth-child(3) { padding-top: 12px; }
+    #pagina-pedidos tbody td:nth-child(1)::before,
+    #pagina-pedidos tbody td:nth-child(2)::before { margin-bottom: 5px; }
+    #pagina-pedidos tbody td:nth-child(3) { padding: 12px 0; }
+    #pagina-pedidos tbody td:nth-child(3) strong { font-size: 18px; }
     #pagina-pedidos tbody td:nth-child(4) { padding-top: 14px; }
+    #pagina-pedidos tbody td:nth-child(5) { align-items: start; }
     #pagina-pedidos .grupo-itens-categoria,
     #pagina-pedidos .lista-itens-categoria,
-    #pagina-pedidos .item-pedido-dobravel { min-width: 0; width: 100%; }
+    #pagina-pedidos .item-pedido-dobravel { width: 100%; min-width: 0; }
     #pagina-pedidos .item-pedido-dobravel summary { gap: 10px; }
     #pagina-pedidos .item-pedido-dobravel summary strong { overflow-wrap: anywhere; }
     #pagina-filiais .grade-filiais { gap: 14px; }
