@@ -1101,8 +1101,10 @@ main {
     transform: translateY(-2px);
 }
 #pagina-dashboard .cartao-atalho-estoque:focus-visible { outline: 3px solid rgba(232, 120, 97, 0.25); outline-offset: 2px; }
+#pagina-dashboard .cartao-atalho-estoque .indicador-conteudo { flex: 1 1 auto; min-width: 0; }
 #pagina-dashboard .cartao-atalho-estoque::after {
-    margin-left: auto;
+    flex: 0 0 auto;
+    margin-left: 4px;
     color: var(--coral-escuro);
     content: "→";
     font-size: 20px;
@@ -3990,6 +3992,7 @@ small {
         min-width: 0;
         box-sizing: border-box;
         overflow-wrap: anywhere;
+        border-right: 0 !important;
         text-align: left !important;
     }
     #pagina-pedidos tbody td:nth-child(1),
