@@ -56,6 +56,22 @@ Sistema web para controle do estoque do Centro de Distribuição (CD), pedidos d
 
 O sistema será servido em `http://localhost:3000`.
 
+## Publicação no Cloudflare Workers
+
+O frontend está preparado para o Cloudflare Workers com arquivos estáticos. No painel do Cloudflare, conecte este repositório e informe:
+
+- **Comando de build:** `npm run build`
+- **Diretório de saída:** `dist`
+- **Variáveis de ambiente:** `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`
+
+As variáveis são usadas somente para gerar `assets/js/env.js` durante o build. A chave publicada do Supabase pode ficar no navegador; a proteção dos dados continua nas regras RLS. Nunca cadastre uma chave `service_role` no Cloudflare Pages.
+
+Após autenticar o Wrangler, também é possível publicar pela linha de comando:
+
+```bash
+npx wrangler deploy
+```
+
 ## Banco de dados e migrações
 
 O projeto Supabase deve estar vinculado antes de aplicar migrações:

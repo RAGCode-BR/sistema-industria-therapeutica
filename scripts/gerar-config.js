@@ -5,12 +5,20 @@ const raiz = path.resolve(__dirname, "..");
 const arquivoEnv = path.join(raiz, ".env.local");
 const arquivoSaida = path.join(raiz, "assets", "js", "env.js");
 
-if (!fs.existsSync(arquivoEnv)) {
+const possuiVariaveisSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY;
+
+if (!fs.existsSync(arquivoEnv) && !possuiVariaveisSupabase) {
+    if (fs.existsSync(arquivoSaida)) {
+        console.warn("Variáveis do Supabase não definidas; usando assets/js/env.js já versionado.");
+        process.exit(0);
+    }
     throw new Error("Crie o arquivo .env.local antes de gerar a configuração.");
 }
 
-const valores = Object.fromEntries(
-    fs.readFileSync(arquivoEnv, "utf8")
+const valores = {
+    ...process.env,
+    ...Object.fromEntries(
+    (fs.existsSync(arquivoEnv) ? fs.readFileSync(arquivoEnv, "utf8") : "")
         .split(/\r?\n/)
         .map((linha) => linha.trim())
         .filter((linha) => linha && !linha.startsWith("#"))
@@ -18,7 +26,8 @@ const valores = Object.fromEntries(
             const indice = linha.indexOf("=");
             return [linha.slice(0, indice), linha.slice(indice + 1)];
         })
-);
+    )
+};
 
 if (!valores.SUPABASE_URL || !valores.SUPABASE_PUBLISHABLE_KEY) {
     throw new Error("SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY são obrigatórias no .env.local.");

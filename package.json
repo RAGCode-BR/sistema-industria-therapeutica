@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "predev": "node scripts/gerar-config.js",
+    "build": "node scripts/build-cloudflare.js",
     "dev": "serve . -l 3000",
     "test:reports": "node scripts/test-relatorios.js",
     "test:quality": "node scripts/test-qualidade.js"
