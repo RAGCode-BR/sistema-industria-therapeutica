@@ -23,6 +23,10 @@
         tipo: el("#qualidade-tipo"),
         descricao: el("#qualidade-descricao"),
         arquivos: el("#qualidade-arquivos"),
+        arquivosResposta: el("#qualidade-arquivos-resposta"),
+        arquivosSolicitacao: el("#qualidade-arquivos-solicitacao"),
+        previewSolicitacao: el("#qualidade-preview-solicitacao"),
+        previewResposta: el("#qualidade-preview-resposta"),
         preview: el("#qualidade-preview-arquivos"),
         mensagem: el("#qualidade-mensagem-formulario"),
         salvar: el("#qualidade-salvar-ocorrencia"),
@@ -86,10 +90,17 @@
         return dados.chamados.filter((chamado) => {
             const item = chamado.itens?.[0];
             const textoBusca = `${chamado.codigo} ${produto(item?.produto_id)?.nome || ""} ${tipo(chamado.tipo_problema_id)?.nome || ""} ${chamado.descricao}`.toLocaleLowerCase("pt-BR");
+            const aguardandoFilial = chamado.situacao === "waiting_branch";
+            const aguardandoCD = chamado.situacao !== "resolved"
+                && !aguardandoFilial
+                && chamado.origem === "branch_receiving"
+                && chamado.encaminhamento === "cd";
+            const aberto = chamado.situacao !== "resolved" && !aguardandoFilial && !aguardandoCD;
             const correspondeStatus = !status
                 || (status === "resolved" && chamado.situacao === "resolved")
-                || (status === "cd" && chamado.situacao !== "resolved" && chamado.origem === "branch_receiving" && chamado.encaminhamento === "cd")
-                || (status === "open" && chamado.situacao !== "resolved" && !(chamado.origem === "branch_receiving" && chamado.encaminhamento === "cd"));
+                || (status === "waiting_branch" && aguardandoFilial)
+                || (status === "cd" && aguardandoCD)
+                || (status === "open" && aberto);
             return correspondeStatus && (!origem || chamado.origem === origem) && (!busca || textoBusca.includes(busca));
         });
     }
@@ -97,8 +108,8 @@
     function renderizar() {
         if (!$.pagina) return;
         const lista = chamadosFiltrados();
-        const abertos = lista.filter((item) => item.situacao !== "resolved").length;
-        const aguardandoCD = lista.filter((item) => item.situacao !== "resolved" && item.origem === "branch_receiving" && item.encaminhamento === "cd").length;
+        const abertos = lista.filter((item) => item.situacao !== "resolved" && item.situacao !== "waiting_branch").length;
+        const aguardandoCD = lista.filter((item) => item.situacao !== "resolved" && item.situacao !== "waiting_branch" && item.origem === "branch_receiving" && item.encaminhamento === "cd").length;
         const resolvidos = lista.filter((item) => item.situacao === "resolved").length;
         el("#qualidade-kpi-abertas").textContent = abertos;
         el("#qualidade-kpi-cd").textContent = aguardandoCD;
@@ -221,11 +232,14 @@
         $.preview.innerHTML = dados.arquivos.map((arquivo, indice) => { const origem = escapar(URL.createObjectURL(arquivo)); const previa = Q.ehVideo(arquivo) ? `<video src="${origem}" muted preload="metadata" aria-label="Prévia de ${escapar(arquivo.name)}"></video>` : `<img src="${origem}" alt="Prévia de ${escapar(arquivo.name)}">`; return `<span>${previa}<span>${escapar(arquivo.name)}</span><button type="button" data-remover-arquivo="${indice}" aria-label="Remover ${escapar(arquivo.name)}">×</button></span>`; }).join("");
     }
 
-    function definirArquivos(files) {
-        const arquivos = [...files];
-        dados.arquivos = arquivos.filter(Q.validarAnexo);
-        if (dados.arquivos.length !== arquivos.length) notificarQualidade("Aceitamos fotos JPEG, PNG ou WEBP de até 10 MB e vídeos MP4, WEBM ou MOV de até 50 MB.", "erro");
-        atualizarPreview();
+    function definirArquivos(files, preview = $.preview) {
+        const arquivos = [...files].filter(Q.validarAnexo);
+        const imagens = arquivos.filter((arquivo) => !Q.ehVideo(arquivo));
+        const videos = arquivos.filter(Q.ehVideo);
+        dados.arquivos = [...imagens.slice(0, 3), ...videos.slice(0, 1)];
+        if (dados.arquivos.length !== files.length) notificarQualidade("Você pode anexar no máximo 3 fotos e 1 vídeo. Fotos: até 10 MB; vídeo: até 50 MB.", "erro");
+        if (preview === $.preview) atualizarPreview();
+        else if (preview) preview.innerHTML = dados.arquivos.map((arquivo) => `<span>${escapar(arquivo.name)}</span>`).join("");
     }
 
     function configurarAreaDeAnexo() {
@@ -253,12 +267,12 @@
         abrirModal($.modalNovo);
     }
 
-    async function enviarEvidencias(chamadoId) {
+    async function enviarEvidencias(chamadoId, contexto = "initial", solicitacaoId = "") {
         for (const arquivo of dados.arquivos) {
             const caminho = `${chamadoId}/${crypto.randomUUID()}-${arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
             const envio = await clienteSupabase.storage.from("quality-evidence").upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
             if (envio.error) { console.error(envio.error); notificarQualidade(`Não foi possível enviar ${arquivo.name}.`, "erro"); continue; }
-            const registro = await clienteSupabase.rpc("registrar_evidencia_qualidade", { p_ocorrencia_id: chamadoId, p_evidencia: { caminho_storage: caminho, nome_arquivo: arquivo.name, mime_type: arquivo.type, tamanho_bytes: arquivo.size, contexto: "initial", legenda: "" } });
+            const registro = await clienteSupabase.rpc("registrar_evidencia_qualidade", { p_ocorrencia_id: chamadoId, p_evidencia: { caminho_storage: caminho, nome_arquivo: arquivo.name, mime_type: arquivo.type, tamanho_bytes: arquivo.size, contexto, solicitacao_id: solicitacaoId, legenda: "" } });
             if (registro.error) { console.error(registro.error); notificarQualidade(`A imagem ${arquivo.name} foi enviada, mas não pôde ser vinculada.`, "erro"); }
         }
     }
@@ -296,6 +310,20 @@
         abrirDetalhes(id);
     }
 
+    async function carregarGaleriasSolicitacao(evidencias) {
+        const galerias = [...document.querySelectorAll("[data-qualidade-galeria-solicitacao]")];
+        await Promise.all(galerias.map(async (galeria) => {
+            const anexosDaSolicitacao = evidencias.filter((item) => item.solicitacao_id === galeria.dataset.qualidadeGaleriaSolicitacao && item.contexto === galeria.dataset.contextoAnexo);
+            if (!anexosDaSolicitacao.length) { galeria.remove(); return; }
+            const anexos = await Promise.all(anexosDaSolicitacao.map(async (evidencia) => {
+                const resultado = await clienteSupabase.storage.from("quality-evidence").createSignedUrl(evidencia.caminho_storage, 3600);
+                if (!resultado.data?.signedUrl) return "";
+                const url = escapar(resultado.data.signedUrl);
+                return evidencia.mime_type?.startsWith("video/") ? `<video controls preload="metadata" src="${url}"></video>` : `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${escapar(evidencia.nome_arquivo)}"></a>`;
+            }));
+            galeria.innerHTML = anexos.join("");
+        }));
+    }
     async function carregarGaleria(evidencias) {
         const galeria = el("#qualidade-galeria");
         if (!galeria || !evidencias.length) return;
@@ -317,6 +345,11 @@
         return evento.descricao;
     }
 
+    function secoesSolicitacoes(chamado) {
+        const solicitacoes = dados.solicitacoes.filter((item) => item.ocorrencia_id === chamado.id).sort((a, b) => new Date(b.solicitada_em) - new Date(a.solicitada_em));
+        if (!solicitacoes.length) return "";
+        return `<section class="qualidade-bloco qualidade-solicitacoes"><h3>Solicitações de informações</h3>${solicitacoes.map((item) => `<article class="qualidade-solicitacao"><div><strong>CD solicitou</strong><small>${formatarData(item.solicitada_em)}</small></div><p>${escapar(item.pergunta)}</p><div class="qualidade-galeria qualidade-galeria-resposta" data-qualidade-galeria-solicitacao="${item.id}" data-contexto-anexo="request"></div>${item.respondida_em ?  `<div class="qualidade-resposta-solicitacao"><div class="qualidade-resposta-conteudo"><div><strong>Resposta da filial</strong><small>${formatarData(item.respondida_em)}</small></div><div class="qualidade-texto-resposta">${escapar(item.resposta || "")}</div></div><div class="qualidade-galeria qualidade-galeria-resposta" data-qualidade-galeria-solicitacao="${item.id}" data-contexto-anexo="response"></div></div>` : '<p class="qualidade-solicitacao-pendente">Aguardando resposta da filial.</p>'}</article>`).join("")}</section>`;
+    }
     function acoesDoChamado(chamado) {
         if (chamado.situacao === "resolved") return `<section class="qualidade-bloco qualidade-resolucao"><h3>Resolução</h3><p>${escapar(chamado.resolucao || "Chamado resolvido.")}</p><small>Resolvido por ${escapar(nomeResponsavel(chamado.resolvido_por))} em ${formatarData(chamado.resolvido_em)}</small></section>`;
         const solicitacao = dados.solicitacoes.find((item) => item.ocorrencia_id === chamado.id && !item.respondida_em);
@@ -330,20 +363,21 @@
         if (!chamado) return;
         dados.atual = chamado;
         const item = chamado.itens?.[0];
-        const evidencias = dados.evidencias.filter((registro) => registro.ocorrencia_id === id);
+        const evidencias = dados.evidencias.filter((registro) => registro.ocorrencia_id === id && registro.contexto === "initial");
+
         const eventos = dados.historico.filter((registro) => registro.ocorrencia_id === id);
         $.detalhesTitulo.textContent = `${chamado.codigo} · ${textoStatus(chamado)}`;
         $.abrirResolucao.hidden = chamado.situacao === "resolved" || !usuarioCD();
         $.solicitarInfo.hidden = chamado.situacao === "resolved" || !usuarioCD();
-        $.detalhes.innerHTML = `<section class="qualidade-resumo-chamado"><div><small>Origem</small><strong>${escapar(textoOrigem(chamado))}</strong></div><div><small>Local</small><strong>${escapar(nomeLocal(chamado))}</strong></div><div><small>Tratamento</small><strong>${escapar(textoTratamento(chamado))}</strong></div><div><small>Status</small><span class="${classeStatus(chamado)}">${escapar(textoStatus(chamado))}</span></div></section><section class="qualidade-bloco"><h3>${escapar(produto(item?.produto_id)?.nome || "Produto")}</h3><p><strong>${Number(item?.quantidade_afetada || 0)} unidade(s) afetada(s)</strong>${item?.quantidade_referencia ? ` de ${Number(item.quantidade_referencia)} enviada(s)` : ""}</p><p>${escapar(tipo(chamado.tipo_problema_id)?.nome || "Problema não informado")} · ${escapar(categoria(chamado.categoria_problema_id)?.nome || "")}</p><p>${escapar(chamado.descricao)}</p></section><section class="qualidade-bloco"><h3>Anexos</h3><div class="qualidade-galeria" id="qualidade-galeria">${evidencias.length ? "Carregando anexos…" : "Nenhuma foto ou vídeo adicionado."}</div></section>${acoesDoChamado(chamado)}<section class="qualidade-bloco"><h3>Histórico</h3><div class="qualidade-timeline">${eventos.map((evento) => `<p><strong>${formatarData(evento.criado_em)}</strong> · ${escapar(descricaoHistorico(evento))}</p>`).join("") || "Sem eventos."}</div></section>`;
+        $.detalhes.innerHTML = `<section class="qualidade-resumo-chamado"><div><small>Origem</small><strong>${escapar(textoOrigem(chamado))}</strong></div><div><small>Local</small><strong>${escapar(nomeLocal(chamado))}</strong></div><div><small>Tratamento</small><strong>${escapar(textoTratamento(chamado))}</strong></div><div><small>Status</small><span class="${classeStatus(chamado)}">${escapar(textoStatus(chamado))}</span></div></section><section class="qualidade-bloco"><h3>${escapar(produto(item?.produto_id)?.nome || "Produto")}</h3><p><strong>${Number(item?.quantidade_afetada || 0)} unidade(s) afetada(s)</strong>${item?.quantidade_referencia ? ` de ${Number(item.quantidade_referencia)} enviada(s)` : ""}</p><p>${escapar(tipo(chamado.tipo_problema_id)?.nome || "Problema não informado")} · ${escapar(categoria(chamado.categoria_problema_id)?.nome || "")}</p><p>${escapar(chamado.descricao)}</p></section><section class="qualidade-bloco"><h3>Anexos do chamado</h3><div class="qualidade-galeria" id="qualidade-galeria">${evidencias.length ? "Carregando anexos…" : "Nenhuma foto ou vídeo adicionado."}</div></section>${secoesSolicitacoes(chamado)}${acoesDoChamado(chamado)}<section class="qualidade-bloco"><h3>Histórico</h3><div class="qualidade-timeline">${eventos.map((evento) => `<p><strong>${formatarData(evento.criado_em)}</strong> · ${escapar(descricaoHistorico(evento))}</p>`).join("") || "Sem eventos."}</div></section>`;
         abrirModal($.modalDetalhes);
-        carregarGaleria(evidencias);
+        carregarGaleria(evidencias); carregarGaleriasSolicitacao(dados.evidencias.filter((registro) => registro.ocorrencia_id === id));
     }
 
-    function abrirResposta(id) { dados.solicitacaoAtual = dados.solicitacoes.find((item) => item.id === id); if (!dados.solicitacaoAtual) return; el("#qualidade-pergunta-recebida").textContent = `Solicitação do CD: ${dados.solicitacaoAtual.pergunta}`; el("#qualidade-resposta-info").value = ""; abrirModal($.modalResponder); }
-    async function enviarResposta() { const resposta = el("#qualidade-resposta-info").value.trim(); if (!resposta) { el("#qualidade-mensagem-resposta").textContent = "Informe a resposta para o CD."; return; } const { error } = await clienteSupabase.rpc("responder_solicitacao_qualidade", { p_solicitacao_id: dados.solicitacaoAtual.id, p_resposta: resposta }); if (error) { el("#qualidade-mensagem-resposta").textContent = error.message; return; } fecharModal($.modalResponder); await carregar(); abrirDetalhes(dados.atual.id); }
-    function abrirSolicitacao() { el("#qualidade-pergunta-info").value = ""; el("#qualidade-mensagem-pergunta").textContent = ""; abrirModal($.modalSolicitar); }
-    async function enviarSolicitacao() { const pergunta = el("#qualidade-pergunta-info").value.trim(); if (!pergunta) { el("#qualidade-mensagem-pergunta").textContent = "Descreva a informação necessária."; return; } const { error } = await clienteSupabase.rpc("solicitar_informacoes_chamado_qualidade", { p_ocorrencia_id: dados.atual.id, p_pergunta: pergunta }); if (error) { el("#qualidade-mensagem-pergunta").textContent = error.message; return; } fecharModal($.modalSolicitar); await carregar(); abrirDetalhes(dados.atual.id); }
+    function abrirResposta(id) { dados.solicitacaoAtual = dados.solicitacoes.find((item) => item.id === id); if (!dados.solicitacaoAtual) return; dados.arquivos = []; if ($.arquivosResposta) $.arquivosResposta.value = ""; if ($.previewResposta) $.previewResposta.innerHTML = ""; el("#qualidade-pergunta-recebida").textContent = `Solicitação do CD: ${dados.solicitacaoAtual.pergunta}`; el("#qualidade-resposta-info").value = ""; abrirModal($.modalResponder); }
+    async function enviarResposta() { const resposta = el("#qualidade-resposta-info").value.trim(); if (!resposta) { el("#qualidade-mensagem-resposta").textContent = "Informe a resposta para o CD."; return; } const { error } = await clienteSupabase.rpc("responder_solicitacao_qualidade", { p_solicitacao_id: dados.solicitacaoAtual.id, p_resposta: resposta, p_filial_id: filialDoChamado() }); if (error) { el("#qualidade-mensagem-resposta").textContent = error.message; return; } await enviarEvidencias(dados.atual.id, "response", dados.solicitacaoAtual.id); fecharModal($.modalResponder); await carregar(); abrirDetalhes(dados.atual.id); }
+    function abrirSolicitacao() { dados.arquivos = []; if ($.arquivosSolicitacao) $.arquivosSolicitacao.value = ""; if ($.previewSolicitacao) $.previewSolicitacao.innerHTML = ""; el("#qualidade-pergunta-info").value = ""; el("#qualidade-mensagem-pergunta").textContent = ""; abrirModal($.modalSolicitar); }
+    async function enviarSolicitacao() { const pergunta = el("#qualidade-pergunta-info").value.trim(); if (!pergunta) { el("#qualidade-mensagem-pergunta").textContent = "Descreva a informação necessária."; return; } const { data: solicitacaoId, error } = await clienteSupabase.rpc("solicitar_informacoes_chamado_qualidade", { p_ocorrencia_id: dados.atual.id, p_pergunta: pergunta }); if (error) { el("#qualidade-mensagem-pergunta").textContent = error.message; return; } await enviarEvidencias(dados.atual.id, "request", solicitacaoId); fecharModal($.modalSolicitar); await carregar(); abrirDetalhes(dados.atual.id); }
     function abrirResolucao() {
         const campo = el("#qualidade-resolucao");
         const mensagem = el("#qualidade-mensagem-resolucao");
@@ -368,6 +402,8 @@
     $.remessa?.addEventListener("change", () => { preencherProdutos(); $.quantidade.value = ""; });
     $.produto?.addEventListener("change", atualizarLimiteQuantidade);
     $.arquivos?.addEventListener("change", () => definirArquivos($.arquivos.files));
+    $.arquivosResposta?.addEventListener("change", () => definirArquivos($.arquivosResposta.files, $.previewResposta));
+    $.arquivosSolicitacao?.addEventListener("change", () => definirArquivos($.arquivosSolicitacao.files, $.previewSolicitacao));
     $.preview?.addEventListener("click", (evento) => { const indice = evento.target.closest("[data-remover-arquivo]")?.dataset.removerArquivo; if (indice === undefined) return; dados.arquivos.splice(Number(indice), 1); atualizarPreview(); });
     $.tabela?.addEventListener("click", (evento) => { const id = evento.target.closest("[data-qualidade-detalhes]")?.dataset.qualidadeDetalhes; if (id) abrirDetalhes(id); });
     $.modalResolver?.addEventListener("click", (evento) => { if (evento.target.closest("#qualidade-resolver-chamado")) resolverChamado(); });
