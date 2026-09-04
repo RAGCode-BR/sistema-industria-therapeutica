@@ -14,4 +14,8 @@ assert.equal(qualidade.duracao("2026-09-02T08:00:00Z", "2026-09-03T11:20:00Z"), 
 assert.equal(qualidade.validarImagem({ type: "image/png", size: 1024 }), true);
 assert.equal(qualidade.validarImagem({ type: "application/pdf", size: 1024 }), false);
 assert.equal(qualidade.validarImagem({ type: "image/jpeg", size: 10485761 }), false);
+assert.equal(qualidade.validarAnexo({ type: "video/mp4", size: 52428800 }), true);
+assert.equal(qualidade.validarAnexo({ type: "video/mp4", size: 52428801 }), false);
+assert.equal(qualidade.validarAnexo({ type: "video/x-msvideo", size: 1024 }), false);
+assert.equal(qualidade.ehVideo({ type: "video/webm", size: 1024 }), true);
 console.log("Testes de qualidade concluídos.");

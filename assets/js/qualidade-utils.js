@@ -19,15 +19,22 @@
         if (horas) return `${horas}h${minutos ? ` ${minutos}min` : ""}`;
         return `${minutos}min`;
     }
-    function validarImagem(arquivo) {
-        return Boolean(arquivo && ["image/jpeg", "image/png", "image/webp"].includes(arquivo.type) && arquivo.size > 0 && arquivo.size <= 10485760);
+    const tiposImagem = ["image/jpeg", "image/png", "image/webp"];
+    const tiposVideo = ["video/mp4", "video/webm", "video/quicktime"];
+    function validarAnexo(arquivo) {
+        if (!arquivo || arquivo.size <= 0) return false;
+        if (tiposImagem.includes(arquivo.type)) return arquivo.size <= 10485760;
+        return tiposVideo.includes(arquivo.type) && arquivo.size <= 52428800;
     }
+    function validarImagem(arquivo) { return validarAnexo(arquivo); }
+    function ehVideo(arquivo) { return Boolean(arquivo && tiposVideo.includes(arquivo.type)); }
     function textoTratamentoChamado(origemChamado, encaminhamento) {
         if (origemChamado === "production") return "Indústria/CD";
         return encaminhamento === "cd" ? "Enviado ao CD" : "Interno na filial";
     }
     function textoStatusChamado(origemChamado, encaminhamento, situacaoChamado) {
         if (situacaoChamado === "resolved") return "Resolvido";
+        if (situacaoChamado === "waiting_branch") return "Aguardando filial";
         if (origemChamado === "branch_receiving" && encaminhamento === "cd") return "Aguardando o CD";
         return origemChamado === "production" ? "Aberto no CD" : "Aberto na filial";
     }
@@ -39,7 +46,9 @@
         textoTratamentoChamado,
         textoStatusChamado,
         duracao,
-        validarImagem
+        validarImagem,
+        validarAnexo,
+        ehVideo
     };
     if (typeof module !== "undefined") module.exports = global.QualidadeUtils;
 })(typeof window !== "undefined" ? window : globalThis);

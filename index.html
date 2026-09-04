@@ -1176,10 +1176,10 @@
                     <label>Produto afetado<select id="qualidade-produto" required><option value="">Selecione</option></select></label>
                     <label>Quantidade afetada<input id="qualidade-quantidade" type="number" min="1" step="1" required></label>
                     <label>Tipo do problema<select id="qualidade-tipo" required><option value="">Selecione</option></select></label>
-                    <label id="qualidade-campo-encaminhamento">Como deseja tratar?<select id="qualidade-encaminhamento"><option value="interno">Resolver na filial</option><option value="cd">Enviar para a indústria/CD</option></select></label>
+                    <div class="qualidade-quantidade-pedida" id="qualidade-quantidade-pedida" hidden><span>Quantidade pedida</span><strong id="qualidade-quantidade-pedida-valor">—</strong></div>
                 </div>
                 <label class="qualidade-descricao-chamado">Descrição do problema<textarea id="qualidade-descricao" rows="4" required placeholder="Conte de forma simples o que aconteceu com o produto."></textarea></label>
-                <label class="qualidade-anexo-chamado">Fotos (opcional)<input id="qualidade-arquivos" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Arraste as imagens ou selecione JPEG, PNG ou WEBP de até 10 MB.</small></label>
+                <label class="qualidade-anexo-chamado">Fotos e vídeos (opcional)<input id="qualidade-arquivos" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" multiple><small>Arraste ou selecione fotos (JPEG, PNG ou WEBP, até 10 MB) e vídeos (MP4, WEBM ou MOV, até 50 MB).</small></label>
                 <div id="qualidade-preview-arquivos" class="qualidade-evidencias-preview"></div>
                 <p class="mensagem-formulario" id="qualidade-mensagem-formulario" aria-live="polite"></p>
                 <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-ocorrencia-qualidade">Cancelar</button><button type="submit" class="botao-principal" id="qualidade-salvar-ocorrencia">Abrir chamado</button></div>
@@ -1191,11 +1191,21 @@
         <div class="modal-conteudo modal-qualidade modal-qualidade-detalhes" role="dialog" aria-modal="true" aria-labelledby="qualidade-titulo-detalhes">
             <div class="modal-cabecalho"><div><p class="subtitulo-modal">Chamado de qualidade</p><h2 id="qualidade-titulo-detalhes">Chamado</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-detalhes-qualidade" aria-label="Fechar">×</button></div>
             <div id="qualidade-detalhes-conteudo"></div>
-            <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-detalhes-qualidade">Fechar</button></div>
+            <div class="acoes-formulario"><button type="button" class="botao-secundario botao-solicitar-info" id="qualidade-solicitar-info" hidden>Solicitar informações</button><button type="button" class="botao-principal botao-abrir-resolucao" id="qualidade-abrir-resolucao" hidden>Resolver chamado</button><button type="button" class="botao-secundario" data-fechar-modal="modal-detalhes-qualidade">Fechar</button></div>
         </div>
     </div>
 
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div class="modal" id="modal-resolver-chamado" aria-hidden="true">
+        <div class="modal-conteudo modal-confirmar-resolucao" role="dialog" aria-modal="true" aria-labelledby="qualidade-titulo-resolucao">
+            <div class="modal-cabecalho"><div><p class="subtitulo-modal">Qualidade</p><h2 id="qualidade-titulo-resolucao">Confirmar resolução</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-resolver-chamado" aria-label="Fechar">×</button></div>
+            <p class="texto-confirmar-resolucao">Descreva a solução adotada antes de marcar o chamado como resolvido.</p>
+            <label class="campo-confirmar-resolucao">Como o problema foi resolvido?<textarea id="qualidade-resolucao" rows="4" placeholder="Descreva de forma objetiva a solução adotada."></textarea></label>
+            <p class="mensagem-formulario" id="qualidade-mensagem-resolucao" aria-live="polite"></p>
+            <div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-resolver-chamado">Cancelar</button><button type="button" class="botao-principal" id="qualidade-resolver-chamado">Marcar como resolvido</button></div>
+        </div>
+    </div>    <div class="modal" id="modal-solicitar-informacoes" aria-hidden="true"><div class="modal-conteudo modal-confirmar-resolucao" role="dialog" aria-modal="true"><div class="modal-cabecalho"><div><p class="subtitulo-modal">Qualidade</p><h2>Solicitar informações</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-solicitar-informacoes" aria-label="Fechar">×</button></div><label class="campo-confirmar-resolucao">O que precisa da filial?<textarea id="qualidade-pergunta-info" rows="4" placeholder="Ex.: Confirme a quantidade recebida e envie uma foto da embalagem."></textarea></label><p class="mensagem-formulario" id="qualidade-mensagem-pergunta"></p><div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-solicitar-informacoes">Cancelar</button><button type="button" class="botao-principal" id="qualidade-enviar-pergunta">Enviar solicitação</button></div></div></div>
+    <div class="modal" id="modal-responder-informacoes" aria-hidden="true"><div class="modal-conteudo modal-confirmar-resolucao" role="dialog" aria-modal="true"><div class="modal-cabecalho"><div><p class="subtitulo-modal">Qualidade</p><h2>Responder ao CD</h2></div><button class="botao-fechar" type="button" data-fechar-modal="modal-responder-informacoes" aria-label="Fechar">×</button></div><p class="texto-confirmar-resolucao" id="qualidade-pergunta-recebida"></p><label class="campo-confirmar-resolucao">Sua resposta<textarea id="qualidade-resposta-info" rows="4" placeholder="Informe os dados solicitados pelo CD."></textarea></label><p class="mensagem-formulario" id="qualidade-mensagem-resposta"></p><div class="acoes-formulario"><button type="button" class="botao-secundario" data-fechar-modal="modal-responder-informacoes">Cancelar</button><button type="button" class="botao-principal" id="qualidade-enviar-resposta">Enviar resposta</button></div></div></div>    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
     <script src="./assets/js/env.js"></script>
